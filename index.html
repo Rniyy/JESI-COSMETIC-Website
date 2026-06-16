@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JESI-COSMETIC — Medicube Official Reseller</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a class="logo" href="#">
+        <span class="logo-main">JESI</span><span class="logo-sep">—</span><span class="logo-sub">COSMETIC</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#">Shop</a></li>
+        <li><a href="#">Skincare</a></li>
+        <li><a href="#">Devices</a></li>
+        <li><a href="#">Sets</a></li>
+        <li><a href="#">About</a></li>
+      </ul>
+      <div class="nav-right">
+        <div class="search-wrap">
+          <i class="ti ti-search" aria-hidden="true"></i>
+          <input type="text" placeholder="Search Medicube..." aria-label="Search products" />
+        </div>
+        <button class="icon-btn" aria-label="Wishlist"><i class="ti ti-heart"></i></button>
+        <button class="icon-btn" aria-label="Cart">
+          <i class="ti ti-shopping-bag"></i>
+          <span class="badge">2</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO SLIDER -->
+  <section class="hero" id="hero" aria-label="Featured products">
+
+    <div class="slide s1 active" id="s0">
+      <div class="slide-photo">
+        <div class="photo-placeholder">
+          <i class="ti ti-photo" aria-hidden="true"></i>
+          <span>Slide 1 photo</span>
+          <small>e.g. Age R Booster Pro</small>
+        </div>
+        <div class="photo-label">New arrival</div>
+      </div>
+      <div class="slide-panel">
+        <div class="watermark">01</div>
+        <span class="eyebrow"><span class="eyebrow-dot"></span>Medicube device</span>
+        <h2 class="slide-title">Age R<br><em>Booster Pro</em></h2>
+        <div class="slide-rule"></div>
+        <p class="slide-sub">LED + ultrasound technology clinically proven to reduce pores and firm skin in 4 weeks.</p>
+        <div class="slide-cta">
+          <a class="btn-primary" href="#">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+          <a class="btn-ghost" href="#">Learn more</a>
+        </div>
+        <div class="slide-foot">
+          <div class="dot-row" id="dots">
+            <button class="dot active" data-i="0" aria-label="Slide 1"></button>
+            <button class="dot" data-i="1" aria-label="Slide 2"></button>
+            <button class="dot" data-i="2" aria-label="Slide 3"></button>
+            <button class="dot" data-i="3" aria-label="Slide 4"></button>
+          </div>
+          <span class="slide-count" id="counter">01 — 04</span>
+        </div>
+        <div class="prog-bar" id="prog"></div>
+        <span class="slide-index">01 / 04</span>
+      </div>
+    </div>
+
+    <div class="slide s2" id="s1">
+      <div class="slide-photo">
+        <div class="photo-placeholder">
+          <i class="ti ti-photo" aria-hidden="true"></i>
+          <span>Slide 2 photo</span>
+          <small>e.g. Red Erasing Serum</small>
+        </div>
+        <div class="photo-label">Bestseller</div>
+      </div>
+      <div class="slide-panel">
+        <div class="watermark">02</div>
+        <span class="eyebrow"><span class="eyebrow-dot"></span>Redness control</span>
+        <h2 class="slide-title">Red Erasing<br><em>Serum</em></h2>
+        <div class="slide-rule"></div>
+        <p class="slide-sub">Calm, correct and even out skin tone with Medicube's bestselling blemish serum.</p>
+        <div class="slide-cta">
+          <a class="btn-primary" href="#">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+          <a class="btn-ghost" href="#">Learn more</a>
+        </div>
+        <span class="slide-index">02 / 04</span>
+      </div>
+    </div>
+
+    <div class="slide s3" id="s2">
+      <div class="slide-photo">
+        <div class="photo-placeholder">
+          <i class="ti ti-photo" aria-hidden="true"></i>
+          <span>Slide 3 photo</span>
+          <small>e.g. Collagen Night Cream</small>
+        </div>
+        <div class="photo-label">Night care</div>
+      </div>
+      <div class="slide-panel">
+        <div class="watermark">03</div>
+        <span class="eyebrow"><span class="eyebrow-dot"></span>Collagen complex</span>
+        <h2 class="slide-title">Collagen<br><em>Night Cream</em></h2>
+        <div class="slide-rule"></div>
+        <p class="slide-sub">Wake up to firmer, plumper skin with triple-collagen overnight wrapping cream.</p>
+        <div class="slide-cta">
+          <a class="btn-primary" href="#">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+          <a class="btn-ghost" href="#">Learn more</a>
+        </div>
+        <span class="slide-index">03 / 04</span>
+      </div>
+    </div>
+
+    <div class="slide s4" id="s3">
+      <div class="slide-photo">
+        <div class="photo-placeholder">
+          <i class="ti ti-photo" aria-hidden="true"></i>
+          <span>Slide 4 photo</span>
+          <small>e.g. Zero Pore Pads</small>
+        </div>
+        <div class="photo-label">Limited set</div>
+      </div>
+      <div class="slide-panel">
+        <div class="watermark">04</div>
+        <span class="eyebrow"><span class="eyebrow-dot"></span>Pore care</span>
+        <h2 class="slide-title">Zero Pore<br><em>Pad Set</em></h2>
+        <div class="slide-rule"></div>
+        <p class="slide-sub">AHA + BHA exfoliating pads that visibly tighten pores and smooth texture overnight.</p>
+        <div class="slide-cta">
+          <a class="btn-primary" href="#">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+          <a class="btn-ghost" href="#">Learn more</a>
+        </div>
+        <span class="slide-index">04 / 04</span>
+      </div>
+    </div>
+
+    <button class="nav-arrow nav-prev" id="prev" aria-label="Previous slide">
+      <i class="ti ti-chevron-left" aria-hidden="true"></i>
+    </button>
+    <button class="nav-arrow nav-next" id="next" aria-label="Next slide">
+      <i class="ti ti-chevron-right" aria-hidden="true"></i>
+    </button>
+  </section>
+
+  <!-- TRUST STRIP -->
+  <div class="strip">
+    <span><i class="ti ti-truck-delivery" aria-hidden="true"></i> Free shipping over $50</span>
+    <span class="strip-dot"></span>
+    <span><i class="ti ti-shield-check" aria-hidden="true"></i> 100% authentic Medicube</span>
+    <span class="strip-dot"></span>
+    <span><i class="ti ti-refresh" aria-hidden="true"></i> 30-day easy returns</span>
+    <span class="strip-dot"></span>
+    <span><i class="ti ti-award" aria-hidden="true"></i> Dermatologist tested</span>
+  </div>
+
+  <!-- CATEGORIES -->
+  <section class="section" aria-label="Shop by category">
+    <div class="sec-hdr">
+      <h2 class="sec-title">Shop by category</h2>
+      <a class="sec-link" href="#">View all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="cat-grid">
+      <a class="cat-card" href="#">
+        <div class="cat-img ci1">
+          <div class="cat-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+        </div>
+        <span class="cat-name">Serums</span>
+        <span class="cat-count">12 products</span>
+      </a>
+      <a class="cat-card" href="#">
+        <div class="cat-img ci2">
+          <div class="cat-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+        </div>
+        <span class="cat-name">Moisturizers</span>
+        <span class="cat-count">8 products</span>
+      </a>
+      <a class="cat-card" href="#">
+        <div class="cat-img ci3">
+          <div class="cat-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+        </div>
+        <span class="cat-name">Devices</span>
+        <span class="cat-count">5 products</span>
+      </a>
+      <a class="cat-card" href="#">
+        <div class="cat-img ci4">
+          <div class="cat-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+        </div>
+        <span class="cat-name">Cleansers</span>
+        <span class="cat-count">6 products</span>
+      </a>
+      <a class="cat-card" href="#">
+        <div class="cat-img ci5">
+          <div class="cat-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+        </div>
+        <span class="cat-name">Pads &amp; Masks</span>
+        <span class="cat-count">9 products</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- BESTSELLERS -->
+  <section class="section section-alt" aria-label="Bestsellers">
+    <div class="sec-hdr">
+      <h2 class="sec-title">Bestsellers</h2>
+      <a class="sec-link" href="#">View all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="products-grid">
+
+      <div class="product-card">
+        <div class="product-img pi1">
+          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+          <span class="prod-badge">Best</span>
+        </div>
+        <div class="product-info">
+          <span class="prod-brand">Medicube</span>
+          <h3 class="prod-name">Age R Booster Pro</h3>
+          <div class="prod-stars">
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <span>4.9 (1.2k)</span>
+          </div>
+          <div class="prod-bottom">
+            <span class="prod-price">$189</span>
+            <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="product-img pi2">
+          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+        </div>
+        <div class="product-info">
+          <span class="prod-brand">Medicube</span>
+          <h3 class="prod-name">Red Erasing Serum</h3>
+          <div class="prod-stars">
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <span>4.8 (863)</span>
+          </div>
+          <div class="prod-bottom">
+            <span class="prod-price">$38</span>
+            <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="product-img pi3">
+          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+          <span class="prod-badge">New</span>
+        </div>
+        <div class="product-info">
+          <span class="prod-brand">Medicube</span>
+          <h3 class="prod-name">Collagen Night Cream</h3>
+          <div class="prod-stars">
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-half-filled" aria-hidden="true"></i>
+            <span>4.7 (512)</span>
+          </div>
+          <div class="prod-bottom">
+            <span class="prod-price">$52</span>
+            <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="product-img pi4">
+          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+        </div>
+        <div class="product-info">
+          <span class="prod-brand">Medicube</span>
+          <h3 class="prod-name">Zero Pore Pads</h3>
+          <div class="prod-stars">
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <span>4.9 (2.1k)</span>
+          </div>
+          <div class="prod-bottom">
+            <span class="prod-price">$28</span>
+            <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="product-img pi5">
+          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+        </div>
+        <div class="product-info">
+          <span class="prod-brand">Medicube</span>
+          <h3 class="prod-name">Deep Cleanser Foam</h3>
+          <div class="prod-stars">
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-half-filled" aria-hidden="true"></i>
+            <span>4.6 (390)</span>
+          </div>
+          <div class="prod-bottom">
+            <span class="prod-price">$24</span>
+            <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="product-img pi6">
+          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+          <span class="prod-badge prod-badge-sale">Sale</span>
+        </div>
+        <div class="product-info">
+          <span class="prod-brand">Medicube</span>
+          <h3 class="prod-name">Collagen Jelly Cream</h3>
+          <div class="prod-stars">
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <span>4.8 (748)</span>
+          </div>
+          <div class="prod-bottom">
+            <span class="prod-price">$44 <s class="prod-old">$58</s></span>
+            <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- NEW ARRIVALS + INFLUENCER -->
+  <section class="section infl-section" aria-label="New arrivals">
+    <div class="sec-hdr">
+      <h2 class="sec-title">New arrivals — as seen on</h2>
+      <a class="sec-link" href="#">See all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="na-grid">
+
+      <div class="infl-poster">
+        <div class="infl-photo-wrap">
+          <div class="infl-ph">
+            <i class="ti ti-user-circle" aria-hidden="true"></i>
+            <span>Influencer photo</span>
+            <small>Replace with real image</small>
+          </div>
+        </div>
+        <div class="infl-overlay">
+          <div class="infl-tag"><i class="ti ti-rosette" aria-hidden="true"></i> Featured creator</div>
+          <div class="infl-name">Sofia Martínez</div>
+          <div class="infl-handle">@sofiaglows · 2.1M followers</div>
+          <p class="infl-quote">"The Age R Booster changed my skin completely. I use it every single morning."</p>
+          <a class="infl-btn" href="#">Shop Sofia's picks <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+        </div>
+      </div>
+
+      <div class="na-products">
+        <div class="na-card">
+          <div class="na-img nai1">
+            <div class="na-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+            <span class="na-tag">New</span>
+          </div>
+          <div class="na-info">
+            <h3 class="na-name">Pore Tightening Serum</h3>
+            <p class="na-desc">From Sofia's morning routine — 98% saw reduced pores in 2 weeks.</p>
+            <div class="na-bottom">
+              <span class="na-price">$44</span>
+              <button class="add-btn" aria-label="Add to cart"><i class="ti ti-plus" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="na-card">
+          <div class="na-img nai2">
+            <div class="na-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+            <span class="na-tag">Trending</span>
+          </div>
+          <div class="na-info">
+            <h3 class="na-name">Aqua Tone Essence</h3>
+            <p class="na-desc">Viral from her nighttime reel — lightweight hydration that layers perfectly.</p>
+            <div class="na-bottom">
+              <span class="na-price">$36</span>
+              <button class="add-btn" aria-label="Add to cart"><i class="ti ti-plus" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="na-card">
+          <div class="na-img nai3">
+            <div class="na-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+            <span class="na-tag">New</span>
+          </div>
+          <div class="na-info">
+            <h3 class="na-name">Barrier Repair Cream</h3>
+            <p class="na-desc">Her pick for repairing dry, stressed skin after active ingredient nights.</p>
+            <div class="na-bottom">
+              <span class="na-price">$48</span>
+              <button class="add-btn" aria-label="Add to cart"><i class="ti ti-plus" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CREATOR PICKS -->
+  <section class="section" aria-label="Creator picks">
+    <div class="sec-hdr">
+      <h2 class="sec-title">Creator picks</h2>
+      <a class="sec-link" href="#">More creators <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="creator-grid">
+      <div class="creator-card">
+        <div class="creator-img cr1">
+          <div class="creator-ph"><i class="ti ti-user-circle" aria-hidden="true"></i></div>
+          <div class="creator-meta">
+            <span class="creator-handle">@minabeauty</span>
+            <span class="creator-followers">890K followers</span>
+          </div>
+        </div>
+        <div class="creator-info">
+          <span class="creator-prod-label">Her pick</span>
+          <span class="creator-prod-name">Age R Booster Pro</span>
+          <div class="creator-bottom">
+            <span class="creator-price">$189</span>
+            <a class="creator-shop" href="#">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="creator-card">
+        <div class="creator-img cr2">
+          <div class="creator-ph"><i class="ti ti-user-circle" aria-hidden="true"></i></div>
+          <div class="creator-meta">
+            <span class="creator-handle">@jayskincare</span>
+            <span class="creator-followers">1.4M followers</span>
+          </div>
+        </div>
+        <div class="creator-info">
+          <span class="creator-prod-label">Morning routine</span>
+          <span class="creator-prod-name">Red Erasing Serum</span>
+          <div class="creator-bottom">
+            <span class="creator-price">$38</span>
+            <a class="creator-shop" href="#">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="creator-card">
+        <div class="creator-img cr3">
+          <div class="creator-ph"><i class="ti ti-user-circle" aria-hidden="true"></i></div>
+          <div class="creator-meta">
+            <span class="creator-handle">@natglow</span>
+            <span class="creator-followers">520K followers</span>
+          </div>
+        </div>
+        <div class="creator-info">
+          <span class="creator-prod-label">Night routine</span>
+          <span class="creator-prod-name">Collagen Night Cream</span>
+          <div class="creator-bottom">
+            <span class="creator-price">$52</span>
+            <a class="creator-shop" href="#">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST STATS -->
+  <section class="section section-alt trust-section" aria-label="Why JESI-COSMETIC">
+    <div class="sec-hdr" style="justify-content:center;text-align:center;flex-direction:column;gap:6px;">
+      <h2 class="sec-title">Why shop with us</h2>
+      <p class="sec-sub">Authorised Medicube reseller. Every product is 100% authentic.</p>
+    </div>
+    <div class="trust-grid">
+      <div class="trust-card">
+        <i class="ti ti-certificate trust-icon" aria-hidden="true"></i>
+        <div class="trust-num">100%</div>
+        <div class="trust-label">Authentic Medicube</div>
+      </div>
+      <div class="trust-card">
+        <i class="ti ti-users trust-icon" aria-hidden="true"></i>
+        <div class="trust-num">48K+</div>
+        <div class="trust-label">Happy customers</div>
+      </div>
+      <div class="trust-card">
+        <i class="ti ti-star trust-icon" aria-hidden="true"></i>
+        <div class="trust-num">4.9</div>
+        <div class="trust-label">Average rating</div>
+      </div>
+      <div class="trust-card">
+        <i class="ti ti-truck-delivery trust-icon" aria-hidden="true"></i>
+        <div class="trust-num">2–4</div>
+        <div class="trust-label">Days delivery</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEWS -->
+  <section class="section" aria-label="Customer reviews">
+    <div class="sec-hdr">
+      <h2 class="sec-title">Customer reviews</h2>
+      <a class="sec-link" href="#">All reviews <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="review-top">
+          <div class="review-avatar ra1">SK</div>
+          <div>
+            <div class="review-name">Sara K.</div>
+            <div class="review-stars">
+              <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
+            </div>
+          </div>
+          <span class="review-product-tag">Age R Booster</span>
+        </div>
+        <p class="review-text">"Pores visibly smaller after just 2 weeks. The device is worth every cent — my skin looks like I had a facial."</p>
+        <span class="review-date">Verified purchase · May 2025</span>
+      </div>
+      <div class="review-card">
+        <div class="review-top">
+          <div class="review-avatar ra2">JL</div>
+          <div>
+            <div class="review-name">Jamie L.</div>
+            <div class="review-stars">
+              <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
+            </div>
+          </div>
+          <span class="review-product-tag">Red Erasing Serum</span>
+        </div>
+        <p class="review-text">"My redness is almost completely gone. I was skeptical but this serum is genuinely the best I have ever tried."</p>
+        <span class="review-date">Verified purchase · April 2025</span>
+      </div>
+      <div class="review-card">
+        <div class="review-top">
+          <div class="review-avatar ra3">MC</div>
+          <div>
+            <div class="review-name">Mia C.</div>
+            <div class="review-stars">
+              <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
+            </div>
+          </div>
+          <span class="review-product-tag">Zero Pore Pads</span>
+        </div>
+        <p class="review-text">"Used these every other night and my texture is so smooth now. Fast delivery from JESI-COSMETIC too!"</p>
+        <span class="review-date">Verified purchase · June 2025</span>
+      </div>
+      <div class="review-card">
+        <div class="review-top">
+          <div class="review-avatar ra4">TC</div>
+          <div>
+            <div class="review-name">Tanya C.</div>
+            <div class="review-stars">
+              <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-half-filled" aria-hidden="true"></i>
+            </div>
+          </div>
+          <span class="review-product-tag">Night Cream</span>
+        </div>
+        <p class="review-text">"Woke up with the bounciest skin. The wrapping texture is so satisfying and it actually works overnight."</p>
+        <span class="review-date">Verified purchase · May 2025</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROMO BANNER -->
+  <div class="promo-banner">
+    <div class="promo-text">
+      <span class="promo-eyebrow">Members only</span>
+      <h2 class="promo-title">Get 15% off your<br>first Medicube order</h2>
+      <a class="promo-btn" href="#">Claim offer <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="promo-visual">
+      <div class="promo-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="logo-main">JESI</span><span class="logo-sep">—</span><span class="logo-sub">COSMETIC</span>
+        <p class="footer-desc">Authorised Medicube reseller. Bringing K-beauty derma skincare to your door.</p>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-title">Shop</span>
+        <a href="#">Serums</a>
+        <a href="#">Moisturizers</a>
+        <a href="#">Devices</a>
+        <a href="#">Sets</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-title">Help</span>
+        <a href="#">FAQ</a>
+        <a href="#">Shipping</a>
+        <a href="#">Returns</a>
+        <a href="#">Contact us</a>
+      </div>
+      <div class="footer-col">
+        <span class="footer-col-title">Company</span>
+        <a href="#">About</a>
+        <a href="#">Privacy policy</a>
+        <a href="#">Terms</a>
+        <a href="#">Authenticity</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 JESI-COSMETIC. All rights reserved. Not affiliated with Medicube / APR Corp.</span>
+      <div class="footer-socials">
+        <a href="#" aria-label="Instagram"><i class="ti ti-brand-instagram"></i></a>
+        <a href="#" aria-label="TikTok"><i class="ti ti-brand-tiktok"></i></a>
+        <a href="#" aria-label="YouTube"><i class="ti ti-brand-youtube"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
