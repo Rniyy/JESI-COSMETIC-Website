@@ -1,18 +1,14 @@
-const { app, BrowserWindow } = require('electron'); // fixed
+const { app, BrowserWindow } = require('electron');
 
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 600,
-    height: 600,
-    resizable: false,
-    maximizable: false,  // fixed typo
-    fullscreenable: false,
-    frame: false,
-    transparent: false,
-    webPreferences: {
-      contextIsolation: true,
-    }
-  });
+const win = new BrowserWindow({
+  width: 1200,
+  height: 800,
+  fullscreenable: true,
+  minimizable: true,
+  frame: true
+});
+
   win.loadFile('index.html');
 }
 
