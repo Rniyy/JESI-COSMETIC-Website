@@ -1,3 +1,5 @@
+
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -981,3 +983,203 @@ body {
 .footer-socials { display: flex; gap: 14px; }
 .footer-socials a { font-size: 18px; color: rgba(255,255,255,0.35); text-decoration: none; transition: color 0.15s; }
 .footer-socials a:hover { color: rgba(255,255,255,0.8); }
+
+/* ─────────────────────────────────────────
+   SHARED — page header (for inner pages)
+───────────────────────────────────────── */
+.page-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 40px 32px;
+}
+.breadcrumb {
+  font-size: 12px;
+  color: #9a9088;
+  margin-bottom: 14px;
+}
+.breadcrumb a { color: #9a9088; text-decoration: none; }
+.breadcrumb a:hover { color: #1e1810; }
+.page-title {
+  font-size: 34px;
+  font-weight: 600;
+  color: #1e1810;
+  margin-bottom: 8px;
+}
+.page-desc {
+  font-size: 14px;
+  color: #9a9088;
+  max-width: 540px;
+  line-height: 1.7;
+}
+
+/* ─────────────────────────────────────────
+   SHARED — filter bar (shop / category pages)
+───────────────────────────────────────── */
+.filter-bar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px 28px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 9px 18px;
+  border-radius: 20px;
+  border: 0.5px solid #ddd8d0;
+  background: #fff;
+  color: #6a6258;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.filter-btn:hover { border-color: #c09080; color: #1e1810; }
+.filter-btn.active { background: #1e1810; border-color: #1e1810; color: #fff; }
+
+/* full-width product grid wrapper for inner pages */
+.shop-grid-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px 64px;
+}
+.shop-grid-wrap .products-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* ─────────────────────────────────────────
+   SHARED — simple page banner (category pages)
+───────────────────────────────────────── */
+.category-banner {
+  background: #f0e8e2;
+  border-radius: 8px;
+  max-width: 1200px;
+  margin: 0 auto 40px;
+  padding: 44px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.category-banner-text h2 { font-size: 24px; font-weight: 600; color: #1e1810; margin-bottom: 8px; }
+.category-banner-text p { font-size: 13px; color: #7a7268; max-width: 380px; line-height: 1.7; }
+.category-banner-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.category-banner-img i { font-size: 36px; color: rgba(0,0,0,0.15); }
+
+/* ─────────────────────────────────────────
+   SHARED — About page
+───────────────────────────────────────── */
+.about-hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 56px 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+.about-hero-img {
+  aspect-ratio: 4/3;
+  background: #f0e8e2;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.about-hero-img i { font-size: 44px; color: rgba(0,0,0,0.15); }
+.about-hero-text .eyebrow { color: #b08070; margin-bottom: 16px; }
+.about-hero-text h1 { font-size: 36px; font-weight: 600; color: #1e1810; line-height: 1.2; margin-bottom: 18px; }
+.about-hero-text p { font-size: 14px; color: #7a7268; line-height: 1.8; max-width: 440px; }
+
+.about-values {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px 56px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.value-card {
+  background: #fff;
+  border: 0.5px solid #e8e4e0;
+  border-radius: 8px;
+  padding: 28px 24px;
+}
+.value-icon { font-size: 24px; color: #c09080; margin-bottom: 14px; display: block; }
+.value-card h3 { font-size: 15px; font-weight: 600; color: #1e1810; margin-bottom: 8px; }
+.value-card p { font-size: 13px; color: #9a9088; line-height: 1.7; }
+
+/* ─────────────────────────────────────────
+   Mobile nav toggle button
+───────────────────────────────────────── */
+.nav-toggle {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border: 0.5px solid #ddd8d0;
+  border-radius: 4px;
+  background: transparent;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #6a6258;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex;
+    position: absolute;
+    top: 62px;
+    left: 0;
+    right: 0;
+    background: #fafaf8;
+    border-bottom: 0.5px solid #e0ddd8;
+    flex-direction: column;
+    padding: 16px 24px;
+    gap: 16px;
+  }
+  .nav-toggle { display: flex; }
+  .search-wrap { display: none; }
+  .slide { flex-direction: column; }
+  .slide-photo { width: 100%; height: 40%; }
+  .slide-panel { padding: 32px 28px; }
+  .slide-title { font-size: 32px; }
+  .nav-prev { left: 16px; }
+  .products-grid, .shop-grid-wrap .products-grid { grid-template-columns: repeat(2, 1fr); }
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .creator-grid, .reviews-grid, .trust-grid { grid-template-columns: repeat(2, 1fr); }
+  .na-grid, .about-hero, .about-values, .footer-top { grid-template-columns: 1fr; }
+  .promo-banner { flex-direction: column; }
+  .promo-text, .promo-visual { border-radius: 8px; }
+}
+
+/* Active/clicked button micro feedback */
+.add-cart.clicked, .add-btn.clicked { transform: scale(0.9); }
+.wish-btn.active { color: #c09080; }
+.wish-btn.active i::before { content: "\ea24"; } /* filled heart fallback if using tabler outline */
+
+/* active nav link underline */
+.nav-links a.active-link {
+  color: #1e1810;
+  position: relative;
+}
+.nav-links a.active-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -20px;
+  height: 2px;
+  background: #c09080;
+}
