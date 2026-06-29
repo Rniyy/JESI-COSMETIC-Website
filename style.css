@@ -577,6 +577,11 @@ body {
   align-items: center;
   justify-content: center;
 }
+.product-img .prod-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Keeps aspect ratio and fills the square beautifully */
+}
 .pi1 { background: #f0e8e2; }
 .pi2 { background: #faeaea; }
 .pi3 { background: #eaf0ee; }
