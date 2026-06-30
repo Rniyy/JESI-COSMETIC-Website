@@ -23,19 +23,48 @@
         <li><a href="about.html" class="active-link">About</a></li>
       </ul>
       <div class="nav-right">
-        <div class="search-wrap">
+        <div class="search-wrap" id="searchWrap">
           <i class="ti ti-search" aria-hidden="true"></i>
-          <input type="text" placeholder="Search Medicube..." aria-label="Search products" />
+          <input type="text" id="searchInput" placeholder="Search Medicube..." aria-label="Search products" autocomplete="off" />
         </div>
-        <button class="icon-btn" aria-label="Wishlist"><i class="ti ti-heart"></i></button>
-        <button class="icon-btn" aria-label="Cart">
+        <button class="icon-btn" id="wishlistBtn" aria-label="Wishlist">
+          <i class="ti ti-heart"></i>
+          <span class="badge" id="wishlistBadge" style="display:none;">0</span>
+        </button>
+        <button class="icon-btn" id="cartBtn" aria-label="Cart">
           <i class="ti ti-shopping-bag"></i>
-          <span class="badge">2</span>
+          <span class="badge" id="cartBadge" style="display:none;">0</span>
         </button>
         <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><i class="ti ti-menu-2"></i></button>
       </div>
     </div>
   </nav>
+  <!-- CART PANEL -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-panel" id="cartPanel" aria-label="Shopping cart">
+    <div class="cart-panel-head">
+      <h2>Your cart</h2>
+      <button class="cart-close" id="cartClose" aria-label="Close cart"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty" id="cartEmpty">
+        <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+        <p>Your cart is empty</p>
+        <span>Add some Medicube favorites to get started.</span>
+      </div>
+    </div>
+    <div class="cart-panel-foot" id="cartFoot">
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">$0</span>
+      </div>
+      <a class="cart-checkout-btn" href="#">Checkout <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+  </aside>
+
+  <!-- SEARCH RESULTS DROPDOWN (lives next to search input via JS positioning) -->
+  <div class="search-results" id="searchResults"></div>
+
 
   <!-- ABOUT HERO -->
   <section class="about-hero">
@@ -70,13 +99,18 @@
 
   <!-- PROMO BANNER -->
   <div class="promo-banner">
-    <div class="promo-text">
+    <div class="promo-bg">
+      <div class="promo-bg-ph">
+        <i class="ti ti-photo" aria-hidden="true"></i>
+        <span>Replace with your image</span>
+      </div>
+      <!-- TO ADD YOUR PHOTO: remove the div above and add: <img src="your-photo.jpg" alt="Medicube promo"> -->
+    </div>
+    <div class="promo-overlay"></div>
+    <div class="promo-content">
       <span class="promo-eyebrow">Members only</span>
       <h2 class="promo-title">Get 15% off your<br>first Medicube order</h2>
       <a class="promo-btn" href="shop.html">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
-    </div>
-    <div class="promo-visual">
-      <div class="promo-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
     </div>
   </div>
 
