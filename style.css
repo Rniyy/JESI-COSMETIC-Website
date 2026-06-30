@@ -940,9 +940,9 @@ body {
   border-radius: 8px;
   background: linear-gradient(
     to right,
-    rgba(10,6,4,0.72) 0%,
-    rgba(10,6,4,0.4) 55%,
-    rgba(10,6,4,0.05) 100%
+    rgba(10, 6, 4, 0.493) 0%,
+    rgba(10, 6, 4, 0.19) 55%,
+    rgba(10, 6, 4, 0.107) 100%
   );
 }
 
