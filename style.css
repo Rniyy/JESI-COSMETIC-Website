@@ -1135,12 +1135,26 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+.about-hero-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
 }
 .about-hero-img i { font-size: 44px; color: rgba(0,0,0,0.15); }
-.about-hero-text .eyebrow { color: #b08070; margin-bottom: 16px; }
+.about-hero-text .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #b08070;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
 .about-hero-text h1 { font-size: 36px; font-weight: 600; color: #1e1810; line-height: 1.2; margin-bottom: 18px; }
 .about-hero-text p { font-size: 14px; color: #7a7268; line-height: 1.8; max-width: 440px; }
-
+ 
 .about-values {
   max-width: 1200px;
   margin: 0 auto;
@@ -1158,7 +1172,6 @@ body {
 .value-icon { font-size: 24px; color: #c09080; margin-bottom: 14px; display: block; }
 .value-card h3 { font-size: 15px; font-weight: 600; color: #1e1810; margin-bottom: 8px; }
 .value-card p { font-size: 13px; color: #9a9088; line-height: 1.7; }
-
 /* ─────────────────────────────────────────
    Mobile nav toggle button
 ───────────────────────────────────────── */
