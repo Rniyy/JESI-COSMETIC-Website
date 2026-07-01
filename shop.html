@@ -23,19 +23,48 @@
         <li><a href="about.html">About</a></li>
       </ul>
       <div class="nav-right">
-        <div class="search-wrap">
+        <div class="search-wrap" id="searchWrap">
           <i class="ti ti-search" aria-hidden="true"></i>
-          <input type="text" placeholder="Search Medicube..." aria-label="Search products" />
+          <input type="text" id="searchInput" placeholder="Search Medicube..." aria-label="Search products" autocomplete="off" />
         </div>
-        <button class="icon-btn" aria-label="Wishlist"><i class="ti ti-heart"></i></button>
-        <button class="icon-btn" aria-label="Cart">
+        <button class="icon-btn" id="wishlistBtn" aria-label="Wishlist">
+          <i class="ti ti-heart"></i>
+          <span class="badge" id="wishlistBadge" style="display:none;">0</span>
+        </button>
+        <button class="icon-btn" id="cartBtn" aria-label="Cart">
           <i class="ti ti-shopping-bag"></i>
-          <span class="badge">2</span>
+          <span class="badge" id="cartBadge" style="display:none;">0</span>
         </button>
         <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><i class="ti ti-menu-2"></i></button>
       </div>
     </div>
   </nav>
+  <!-- CART PANEL -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-panel" id="cartPanel" aria-label="Shopping cart">
+    <div class="cart-panel-head">
+      <h2>Your cart</h2>
+      <button class="cart-close" id="cartClose" aria-label="Close cart"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty" id="cartEmpty">
+        <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+        <p>Your cart is empty</p>
+        <span>Add some Medicube favorites to get started.</span>
+      </div>
+    </div>
+    <div class="cart-panel-foot" id="cartFoot">
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">$0</span>
+      </div>
+      <a class="cart-checkout-btn" href="#">Checkout <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+  </aside>
+
+  <!-- SEARCH RESULTS DROPDOWN (lives next to search input via JS positioning) -->
+  <div class="search-results" id="searchResults"></div>
+
 
   <!-- PAGE HEADER -->
   <div class="page-header">
@@ -58,9 +87,9 @@
   <div class="shop-grid-wrap">
     <div class="products-grid">
 
-      <div class="product-card" data-category="devices">
+      <div class="product-card" data-category="devices" data-name="Age R Booster Pro" data-price="189">
         <div class="product-img pi1">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Booster.jpg" alt="Age R Booster Pro">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">Best</span>
         </div>
@@ -72,9 +101,9 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="serums">
+      <div class="product-card" data-category="serums" data-name="Red Erasing Serum" data-price="38">
         <div class="product-img pi2">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Peeling pad.jpg" alt="Red Erasing Serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -85,9 +114,9 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="moisturizers">
+      <div class="product-card" data-category="moisturizers" data-name="Collagen Night Cream" data-price="52">
         <div class="product-img pi3">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Red gel cleansing.jpg" alt="Collagen Night Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">New</span>
         </div>
@@ -99,9 +128,9 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="pads">
+      <div class="product-card" data-category="pads" data-name="Zero Pore Pads" data-price="28">
         <div class="product-img pi4">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="yellow mask.jpg" alt="Zero Pore Pads">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -112,9 +141,9 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="cleansers">
+      <div class="product-card" data-category="cleansers" data-name="Deep Cleanser Foam" data-price="24">
         <div class="product-img pi5">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="yellow creamy mask.jpg" alt="Deep Cleanser Foam">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -125,9 +154,9 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="moisturizers">
+      <div class="product-card" data-category="moisturizers" data-name="Collagen Jelly Cream" data-price="44">
         <div class="product-img pi6">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Peptide.jpg" alt="Collagen Jelly Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge prod-badge-sale">Sale</span>
         </div>
@@ -139,9 +168,9 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="serums">
+      <div class="product-card" data-category="serums" data-name="Pore Tightening Serum" data-price="44">
         <div class="product-img pi1">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Pink toner.jpg" alt="Pore Tightening Serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -152,9 +181,9 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="devices">
+      <div class="product-card" data-category="devices" data-name="Deep Vita Booster" data-price="159">
         <div class="product-img pi2">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Red acid serum.jpg" alt="Deep Vita Booster">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">

@@ -23,26 +23,56 @@
         <li><a href="about.html">About</a></li>
       </ul>
       <div class="nav-right">
-        <div class="search-wrap">
+        <div class="search-wrap" id="searchWrap">
           <i class="ti ti-search" aria-hidden="true"></i>
-          <input type="text" placeholder="Search Medicube..." aria-label="Search products" />
+          <input type="text" id="searchInput" placeholder="Search Medicube..." aria-label="Search products" autocomplete="off" />
         </div>
-        <button class="icon-btn" aria-label="Wishlist"><i class="ti ti-heart"></i></button>
-        <button class="icon-btn" aria-label="Cart">
+        <button class="icon-btn" id="wishlistBtn" aria-label="Wishlist">
+          <i class="ti ti-heart"></i>
+          <span class="badge" id="wishlistBadge" style="display:none;">0</span>
+        </button>
+        <button class="icon-btn" id="cartBtn" aria-label="Cart">
           <i class="ti ti-shopping-bag"></i>
-          <span class="badge">2</span>
+          <span class="badge" id="cartBadge" style="display:none;">0</span>
         </button>
         <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><i class="ti ti-menu-2"></i></button>
       </div>
     </div>
   </nav>
 
+  <!-- CART PANEL -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-panel" id="cartPanel" aria-label="Shopping cart">
+    <div class="cart-panel-head">
+      <h2>Your cart</h2>
+      <button class="cart-close" id="cartClose" aria-label="Close cart"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty" id="cartEmpty">
+        <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+        <p>Your cart is empty</p>
+        <span>Add some Medicube favorites to get started.</span>
+      </div>
+    </div>
+    <div class="cart-panel-foot" id="cartFoot">
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">$0</span>
+      </div>
+      <a class="cart-checkout-btn" href="#">Checkout <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+  </aside>
+
+  <!-- SEARCH RESULTS DROPDOWN -->
+  <div class="search-results" id="searchResults"></div>
+
   <!-- HERO SLIDER -->
   <section class="hero" id="hero" aria-label="Featured products">
- <!-- SLIDE 1 -->
+
+    <!-- SLIDE 1 -->
     <div class="slide s1 active" id="s0">
       <div class="slide-bg">
-        <img src="Age R Booster Pro.jpg" alt="Age R Booster Pro"> 
+        <img src="Age R Booster Pro.jpg" alt="Age R Booster Pro">
       </div>
       <div class="slide-overlay"></div>
       <div class="slide-content">
@@ -52,8 +82,8 @@
           <div class="slide-rule"></div>
           <p class="slide-sub">LED + ultrasound technology clinically proven to reduce pores and firm skin in 4 weeks.</p>
           <div class="slide-cta">
-            <a class="btn-primary s1-btn" href="#">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
-            <a class="btn-ghost-light" href="#">Learn more</a>
+            <a class="btn-primary s1-btn" href="shop.html">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+            <a class="btn-ghost-light" href="shop.html">Learn more</a>
           </div>
         </div>
         <div class="slide-badge">New arrival</div>
@@ -63,7 +93,7 @@
     <!-- SLIDE 2 -->
     <div class="slide s2" id="s1">
       <div class="slide-bg">
-        <img src="Red Cream.jpg" alt="Redness">
+        <img src="Red Cream.jpg" alt="Red Erasing Serum">
       </div>
       <div class="slide-overlay"></div>
       <div class="slide-content">
@@ -71,10 +101,10 @@
           <span class="eyebrow"><span class="eyebrow-dot"></span>Redness control</span>
           <h2 class="slide-title">Red Erasing<br><em>Serum</em></h2>
           <div class="slide-rule"></div>
-          <p class="slide-sub">Calm, correct and even out skin tone with Medicube\'s bestselling blemish serum.</p>
+          <p class="slide-sub">Calm, correct and even out skin tone with Medicube's bestselling blemish serum.</p>
           <div class="slide-cta">
-            <a class="btn-primary s2-btn" href="#">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
-            <a class="btn-ghost-light" href="#">Learn more</a>
+            <a class="btn-primary s2-btn" href="shop.html">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+            <a class="btn-ghost-light" href="shop.html">Learn more</a>
           </div>
         </div>
         <div class="slide-badge">Bestseller</div>
@@ -84,7 +114,7 @@
     <!-- SLIDE 3 -->
     <div class="slide s3" id="s2">
       <div class="slide-bg">
-        <img src="Collagen Mask.jpg" alt="Night care">         
+        <img src="Collagen Mask.jpg" alt="Collagen Night Cream">
       </div>
       <div class="slide-overlay"></div>
       <div class="slide-content">
@@ -94,8 +124,8 @@
           <div class="slide-rule"></div>
           <p class="slide-sub">Wake up to firmer, plumper skin with triple-collagen overnight wrapping cream.</p>
           <div class="slide-cta">
-            <a class="btn-primary s3-btn" href="#">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
-            <a class="btn-ghost-light" href="#">Learn more</a>
+            <a class="btn-primary s3-btn" href="shop.html">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+            <a class="btn-ghost-light" href="shop.html">Learn more</a>
           </div>
         </div>
         <div class="slide-badge">Night care</div>
@@ -105,7 +135,7 @@
     <!-- SLIDE 4 -->
     <div class="slide s4" id="s3">
       <div class="slide-bg">
-        <img src="Pore Zero.jpg" alt="pore">
+        <img src="Pore Zero.jpg" alt="Zero Pore Pad Set">
       </div>
       <div class="slide-overlay"></div>
       <div class="slide-content">
@@ -115,15 +145,15 @@
           <div class="slide-rule"></div>
           <p class="slide-sub">AHA + BHA exfoliating pads that visibly tighten pores and smooth texture overnight.</p>
           <div class="slide-cta">
-            <a class="btn-primary s4-btn" href="#">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
-            <a class="btn-ghost-light" href="#">Learn more</a>
+            <a class="btn-primary s4-btn" href="shop.html">Shop now <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+            <a class="btn-ghost-light" href="shop.html">Learn more</a>
           </div>
         </div>
         <div class="slide-badge">Limited set</div>
       </div>
     </div>
 
-    <!-- SHARED CONTROLS (overlaid on top of all slides) -->
+    <!-- SHARED CONTROLS -->
     <div class="hero-controls">
       <div class="dot-row" id="dots">
         <button class="dot active" data-i="0" aria-label="Slide 1"></button>
@@ -159,38 +189,38 @@
   <section class="section" aria-label="Shop by category">
     <div class="sec-hdr">
       <h2 class="sec-title">Shop by category</h2>
-      <a class="sec-link" href="#">View all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+      <a class="sec-link" href="shop.html">View all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
     </div>
     <div class="cat-grid">
-      <a class="cat-card" href="#">
+      <a class="cat-card" href="skincare.html">
         <div class="cat-img ci1">
           <img src="Serums.jpg" alt="Skincare Serums" class="cat-pic">
         </div>
         <span class="cat-name">Serums</span>
         <span class="cat-count">12 products</span>
       </a>
-      <a class="cat-card" href="#">
+      <a class="cat-card" href="skincare.html">
         <div class="cat-img ci2">
           <img src="Moistures.jpg" alt="Skincare Moisturizers" class="cat-pic">
         </div>
         <span class="cat-name">Moisturizers</span>
         <span class="cat-count">8 products</span>
       </a>
-      <a class="cat-card" href="#">
+      <a class="cat-card" href="devices.html">
         <div class="cat-img ci3">
           <img src="Devices.jpg" alt="Skincare Devices" class="cat-pic">
         </div>
         <span class="cat-name">Devices</span>
         <span class="cat-count">5 products</span>
       </a>
-      <a class="cat-card" href="#">
+      <a class="cat-card" href="skincare.html">
         <div class="cat-img ci4">
           <img src="Cleanser.jpg" alt="Skincare Cleansers" class="cat-pic">
         </div>
         <span class="cat-name">Cleansers</span>
         <span class="cat-count">6 products</span>
       </a>
-      <a class="cat-card" href="#">
+      <a class="cat-card" href="skincare.html">
         <div class="cat-img ci5">
           <img src="Pads.jpg" alt="Skincare Pads" class="cat-pic">
         </div>
@@ -204,13 +234,13 @@
   <section class="section section-alt" aria-label="Bestsellers">
     <div class="sec-hdr">
       <h2 class="sec-title">Bestsellers</h2>
-      <a class="sec-link" href="#">View all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+      <a class="sec-link" href="shop.html">View all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
     </div>
     <div class="products-grid">
 
-      <div class="product-card">
+      <div class="product-card" data-name="Age R Booster Pro" data-price="189">
         <div class="product-img pi1">
-          <img src="Pink Booster pro.jpg" alt="Skincare device" class="prod-img">
+          <img src="Pink Booster pro.jpg" alt="Age R Booster Pro">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">Best</span>
         </div>
@@ -218,11 +248,7 @@
           <span class="prod-brand">Medicube</span>
           <h3 class="prod-name">Age R Booster Pro</h3>
           <div class="prod-stars">
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
             <span>4.9 (1.2k)</span>
           </div>
           <div class="prod-bottom">
@@ -232,20 +258,16 @@
         </div>
       </div>
 
-      <div class="product-card">
+      <div class="product-card" data-name="Red Erasing Serum" data-price="38">
         <div class="product-img pi2">
-          <img src="Red serum.jpg" alt="Red serum" class="prod-img">
+          <img src="Red serum.jpg" alt="Red Erasing Serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
           <span class="prod-brand">Medicube</span>
           <h3 class="prod-name">Red Erasing Serum</h3>
           <div class="prod-stars">
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
             <span>4.8 (863)</span>
           </div>
           <div class="prod-bottom">
@@ -255,9 +277,9 @@
         </div>
       </div>
 
-      <div class="product-card">
+      <div class="product-card" data-name="Collagen Night Cream" data-price="52">
         <div class="product-img pi3">
-          <img src="Collagen cream.jpg" alt="Skincare device" class="prod-img">
+          <img src="Collagen cream.jpg" alt="Collagen Night Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">New</span>
         </div>
@@ -265,11 +287,7 @@
           <span class="prod-brand">Medicube</span>
           <h3 class="prod-name">Collagen Night Cream</h3>
           <div class="prod-stars">
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-half-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-half-filled" aria-hidden="true"></i>
             <span>4.7 (512)</span>
           </div>
           <div class="prod-bottom">
@@ -279,20 +297,16 @@
         </div>
       </div>
 
-      <div class="product-card">
+      <div class="product-card" data-name="Zero Pore Pads" data-price="28">
         <div class="product-img pi4">
-          <img src="Zero padss.jpg" alt="Skincare zero pads" class="prod-img">
+          <img src="Zero padss.jpg" alt="Zero Pore Pads">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
           <span class="prod-brand">Medicube</span>
           <h3 class="prod-name">Zero Pore Pads</h3>
           <div class="prod-stars">
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
             <span>4.9 (2.1k)</span>
           </div>
           <div class="prod-bottom">
@@ -302,20 +316,16 @@
         </div>
       </div>
 
-      <div class="product-card">
+      <div class="product-card" data-name="Deep Cleanser Foam" data-price="24">
         <div class="product-img pi5">
-          <img src="Collagen cleansing.jpg" alt="Collagen cleansing" class="prod-img">
+          <img src="Collagen cleansing.jpg" alt="Deep Cleanser Foam">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
           <span class="prod-brand">Medicube</span>
           <h3 class="prod-name">Deep Cleanser Foam</h3>
           <div class="prod-stars">
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-half-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-half-filled" aria-hidden="true"></i>
             <span>4.6 (390)</span>
           </div>
           <div class="prod-bottom">
@@ -325,9 +335,9 @@
         </div>
       </div>
 
-      <div class="product-card">
+      <div class="product-card" data-name="Collagen Jelly Cream" data-price="44">
         <div class="product-img pi6">
-          <img src="Mask.jpg" alt="Masks" class="prod-img">
+          <img src="Mask.jpg" alt="Collagen Jelly Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge prod-badge-sale">Sale</span>
         </div>
@@ -335,11 +345,7 @@
           <span class="prod-brand">Medicube</span>
           <h3 class="prod-name">Collagen Jelly Cream</h3>
           <div class="prod-stars">
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
-            <i class="ti ti-star-filled" aria-hidden="true"></i>
+            <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
             <span>4.8 (748)</span>
           </div>
           <div class="prod-bottom">
@@ -356,29 +362,27 @@
   <section class="section infl-section" aria-label="New arrivals">
     <div class="sec-hdr">
       <h2 class="sec-title">New arrivals — as seen on</h2>
-      <a class="sec-link" href="#">See all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+      <a class="sec-link" href="shop.html">See all <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
     </div>
     <div class="na-grid">
 
       <div class="infl-poster">
         <div class="infl-photo-wrap">
-          <div class="infl-ph">
-            <img src="Kendal.jpg" alt="Influencer Name">
-          </div>
+          <img src="Kendal.jpg" alt="Featured creator">
         </div>
         <div class="infl-overlay">
           <div class="infl-tag"><i class="ti ti-rosette" aria-hidden="true"></i> Featured creator</div>
           <div class="infl-name">Sofia Martínez</div>
           <div class="infl-handle">@sofiaglows · 2.1M followers</div>
           <p class="infl-quote">"The Age R Booster changed my skin completely. I use it every single morning."</p>
-          <a class="infl-btn" href="#">Shop Sofia's picks <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+          <a class="infl-btn" href="shop.html">Shop Sofia's picks <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
         </div>
       </div>
 
       <div class="na-products">
-        <div class="na-card">
+        <div class="na-card" data-name="Pore Tightening Serum" data-price="44">
           <div class="na-img nai1">
-            <img src="Pore zero serum.jpg" alt="pore zero serum">
+            <img src="Pore zero serum.jpg" alt="Pore Tightening Serum">
             <span class="na-tag">New</span>
           </div>
           <div class="na-info">
@@ -390,9 +394,9 @@
             </div>
           </div>
         </div>
-        <div class="na-card">
+        <div class="na-card" data-name="Aqua Tone Essence" data-price="36">
           <div class="na-img nai2">
-            <img src="vita C cream.jpg" alt="Vita C cream">
+            <img src="vita C cream.jpg" alt="Aqua Tone Essence">
             <span class="na-tag">Trending</span>
           </div>
           <div class="na-info">
@@ -404,9 +408,9 @@
             </div>
           </div>
         </div>
-        <div class="na-card">
+        <div class="na-card" data-name="Barrier Repair Cream" data-price="48">
           <div class="na-img nai3">
-            <img src="collagen shot pink.jpg" alt="Collagen shot">
+            <img src="collagen shot pink.jpg" alt="Barrier Repair Cream">
             <span class="na-tag">New</span>
           </div>
           <div class="na-info">
@@ -427,7 +431,7 @@
   <section class="section" aria-label="Creator picks">
     <div class="sec-hdr">
       <h2 class="sec-title">Creator picks</h2>
-      <a class="sec-link" href="#">More creators <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+      <a class="sec-link" href="shop.html">More creators <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
     </div>
     <div class="creator-grid">
       <div class="creator-card">
@@ -443,7 +447,7 @@
           <span class="creator-prod-name">Age R Booster Pro</span>
           <div class="creator-bottom">
             <span class="creator-price">$189</span>
-            <a class="creator-shop" href="#">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
+            <a class="creator-shop" href="shop.html">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
           </div>
         </div>
       </div>
@@ -460,7 +464,7 @@
           <span class="creator-prod-name">Red Erasing Serum</span>
           <div class="creator-bottom">
             <span class="creator-price">$38</span>
-            <a class="creator-shop" href="#">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
+            <a class="creator-shop" href="shop.html">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
           </div>
         </div>
       </div>
@@ -477,7 +481,7 @@
           <span class="creator-prod-name">Collagen Night Cream</span>
           <div class="creator-bottom">
             <span class="creator-price">$52</span>
-            <a class="creator-shop" href="#">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
+            <a class="creator-shop" href="shop.html">Shop <i class="ti ti-arrow-up-right" aria-hidden="true"></i></a>
           </div>
         </div>
       </div>
@@ -518,7 +522,7 @@
   <section class="section" aria-label="Customer reviews">
     <div class="sec-hdr">
       <h2 class="sec-title">Customer reviews</h2>
-      <a class="sec-link" href="#">All reviews <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+      <a class="sec-link" href="shop.html">All reviews <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
     </div>
     <div class="reviews-grid">
       <div class="review-card">
@@ -583,7 +587,7 @@
   <!-- PROMO BANNER -->
   <div class="promo-banner">
     <div class="promo-bg">
-      <img src="Coupon.png" alt="Coupon BANNER">
+      <img src="Coupon.png" alt="Medicube promo">
     </div>
     <div class="promo-overlay"></div>
     <div class="promo-content">
@@ -592,7 +596,6 @@
       <a class="promo-btn" href="shop.html">Claim offer <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
     </div>
   </div>
-
 
   <!-- FOOTER -->
   <footer class="footer">
@@ -603,10 +606,10 @@
       </div>
       <div class="footer-col">
         <span class="footer-col-title">Shop</span>
-        <a href="#">Serums</a>
-        <a href="#">Moisturizers</a>
-        <a href="#">Devices</a>
-        <a href="#">Sets</a>
+        <a href="skincare.html">Serums</a>
+        <a href="skincare.html">Moisturizers</a>
+        <a href="devices.html">Devices</a>
+        <a href="sets.html">Sets</a>
       </div>
       <div class="footer-col">
         <span class="footer-col-title">Help</span>
@@ -617,7 +620,7 @@
       </div>
       <div class="footer-col">
         <span class="footer-col-title">Company</span>
-        <a href="#">About</a>
+        <a href="about.html">About</a>
         <a href="#">Privacy policy</a>
         <a href="#">Terms</a>
         <a href="#">Authenticity</a>
