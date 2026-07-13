@@ -431,6 +431,157 @@ function initNavToggle() {
 }
 
 /* ─────────────────────────────────────────────────────────
+   QUICK VIEW — product details modal
+───────────────────────────────────────────────────────── */
+function initQuickView() {
+  const overlay   = document.getElementById('qvOverlay');
+  const modal     = document.getElementById('qvModal');
+  const closeBtn  = document.getElementById('qvClose');
+  if (!overlay || !modal) return;
+
+  const qvImg     = document.getElementById('qvImg');
+  const qvName    = document.getElementById('qvName');
+  const qvStars   = document.getElementById('qvStars');
+  const qvPrice   = document.getElementById('qvPrice');
+  const qvDesc    = document.getElementById('qvDesc');
+  const qvQtyNum  = document.getElementById('qvQtyNum');
+  const qvDec     = document.getElementById('qvDec');
+  const qvInc     = document.getElementById('qvInc');
+  const qvAddCart = document.getElementById('qvAddCart');
+  const qvWish    = document.getElementById('qvWish');
+
+  const descByCategory = {
+    serums:       'A lightweight, fast-absorbing serum formulated to target visible concerns with consistent daily use — layer it under your moisturizer morning or night.',
+    moisturizers: 'A nourishing daily moisturizer that locks in hydration and strengthens your skin barrier, leaving skin soft, plump and comfortable.',
+    devices:      'A dermatologist-tested at-home device designed to deliver clinic-level results with just a few minutes of use per day.',
+    cleansers:    'A gentle, low-pH cleanser that lifts away impurities and makeup without stripping the skin, leaving it clean and balanced.',
+    pads:         'Pre-soaked pads that make toning, exfoliating or hydrating as easy as one swipe — a simple addition to any routine.',
+    sets:         'A curated Medicube bundle designed to work together for a complete routine — better value, better results.',
+  };
+
+  let activeCard = null;
+  let qty = 1;
+
+  function openModal(card) {
+    activeCard = card;
+    qty = 1;
+    qvQtyNum.textContent = qty;
+
+    const name     = card.dataset.name || card.querySelector('.prod-name')?.textContent.trim() || '';
+    const category = card.dataset.category;
+    const imgEl    = card.querySelector('.product-img img');
+    const imgWrap  = card.querySelector('.product-img');
+    const starsHTML = card.querySelector('.prod-stars')?.innerHTML || '';
+    const priceHTML = card.querySelector('.prod-price')?.innerHTML || (card.dataset.price ? `$${card.dataset.price}` : '');
+    const badgeEl  = card.querySelector('.prod-badge');
+    const wished   = card.querySelector('.wish-btn')?.classList.contains('wished');
+
+    qvName.textContent = name;
+    qvStars.innerHTML  = starsHTML;
+    qvPrice.innerHTML  = priceHTML;
+    qvDesc.textContent = descByCategory[category] || 'A Medicube favorite, formulated for visible results with regular use.';
+
+    // image + background swatch to match the card
+    qvImg.className = 'qv-img';
+    if (imgWrap) {
+      const swatch = [...imgWrap.classList].find(c => c.startsWith('pi'));
+      if (swatch) qvImg.classList.add(swatch);
+    }
+    qvImg.innerHTML = '';
+    if (imgEl) {
+      const img = document.createElement('img');
+      img.src = imgEl.getAttribute('src');
+      img.alt = name;
+      qvImg.appendChild(img);
+    } else {
+      qvImg.innerHTML = '<i class="ti ti-photo" aria-hidden="true"></i>';
+    }
+    if (badgeEl) {
+      const badge = badgeEl.cloneNode(true);
+      badge.classList.add('qv-badge');
+      qvImg.appendChild(badge);
+    }
+
+    qvWish.classList.toggle('wished', !!wished);
+
+    overlay.classList.add('open');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    overlay.classList.remove('open');
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    activeCard = null;
+  }
+
+  document.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.wish-btn') || e.target.closest('.add-cart')) return;
+      openModal(card);
+    });
+  });
+
+  closeBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+  });
+
+  qvDec.addEventListener('click', () => { qty = Math.max(1, qty - 1); qvQtyNum.textContent = qty; });
+  qvInc.addEventListener('click', () => { qty = qty + 1; qvQtyNum.textContent = qty; });
+
+  qvAddCart.addEventListener('click', async () => {
+    if (!activeCard) return;
+    const productName = activeCard.dataset.name || activeCard.querySelector('.prod-name')?.textContent.trim();
+    if (!productName) return;
+
+    try {
+      const res  = await fetch(`${API}/products?q=${encodeURIComponent(productName)}`, { credentials: 'include' });
+      const json = await res.json();
+      if (!json.success || json.data.length === 0) {
+        showToast('Product not found in database', 'error');
+        return;
+      }
+      const product_id = json.data[0].id;
+
+      const addRes  = await fetch(`${API}/cart`, {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ product_id, quantity: qty }),
+      });
+      const addJson = await addRes.json();
+      if (addJson.success) {
+        showToast(`${productName} added to cart`);
+        const cartBadge = document.getElementById('cartBadge');
+        const cartRes  = await fetch(`${API}/cart`, { credentials: 'include' });
+        const cartJson = await cartRes.json();
+        if (cartBadge) {
+          cartBadge.textContent   = cartJson.item_count;
+          cartBadge.style.display = cartJson.item_count > 0 ? '' : 'none';
+        }
+        closeModal();
+      }
+    } catch (err) {
+      showToast('Could not add to cart', 'error');
+      console.error(err);
+    }
+  });
+
+  // Delegate to the underlying card's own wishlist button so state stays in sync
+  qvWish.addEventListener('click', () => {
+    if (!activeCard) return;
+    const cardWishBtn = activeCard.querySelector('.wish-btn');
+    if (cardWishBtn) {
+      cardWishBtn.click();
+      qvWish.classList.toggle('wished', cardWishBtn.classList.contains('wished'));
+    }
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
    TOAST NOTIFICATION
 ───────────────────────────────────────────────────────── */
 function showToast(msg, type = 'success') {
@@ -458,4 +609,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   initFilters();
   initNavToggle();
+  initQuickView();
 });

@@ -64,6 +64,34 @@
   <!-- SEARCH RESULTS DROPDOWN (lives next to search input via JS positioning) -->
   <div class="search-results" id="searchResults"></div>
 
+  <!-- QUICK VIEW MODAL -->
+  <div class="qv-overlay" id="qvOverlay"></div>
+  <div class="qv-modal" id="qvModal" role="dialog" aria-modal="true" aria-label="Product details">
+    <button class="qv-close" id="qvClose" aria-label="Close product details"><i class="ti ti-x"></i></button>
+    <div class="qv-body">
+      <div class="qv-img" id="qvImg"></div>
+      <div class="qv-info">
+        <span class="prod-brand">Medicube</span>
+        <h2 class="qv-name" id="qvName"></h2>
+        <div class="prod-stars" id="qvStars"></div>
+        <div class="qv-price" id="qvPrice"></div>
+        <p class="qv-desc" id="qvDesc"></p>
+        <div class="qv-qty">
+          <span>Quantity</span>
+          <div class="qty-wrap">
+            <button class="qty-btn" id="qvDec" aria-label="Decrease quantity">−</button>
+            <span class="qty-num" id="qvQtyNum">1</span>
+            <button class="qty-btn" id="qvInc" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+        <div class="qv-actions">
+          <button class="qv-add-cart" id="qvAddCart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i> Add to cart</button>
+          <button class="wish-btn qv-wish" id="qvWish" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- PAGE HEADER -->
   <div class="page-header">
@@ -102,7 +130,7 @@
 
       <div class="product-card" data-category="serums" data-name="Red Erasing Serum" data-price="38">
         <div class="product-img pi2">
-          <img src="Peeling pad.jpg" alt="Red Erasing Serum">
+          <img src="Red acid serum.jpg" alt="Red Erasing Serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -115,7 +143,7 @@
 
       <div class="product-card" data-category="moisturizers" data-name="Collagen Night Cream" data-price="52">
         <div class="product-img pi3">
-          <img src="Red gel cleansing.jpg" alt="Collagen Night Cream">
+          <img src="one day cream.jpg" alt="Collagen Night Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">New</span>
         </div>
@@ -142,7 +170,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Deep Cleanser Foam" data-price="24">
         <div class="product-img pi5">
-          <img src="yellow creamy mask.jpg" alt="Deep Cleanser Foam">
+          <img src="Red gel cleansing.jpg" alt="Deep Cleanser Foam">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -153,7 +181,7 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="moisturizers" data-name="Collagen Jelly Cream" data-price="44">
+      <div class="product-card" data-category="serums" data-name="Collagen Jelly Cream" data-price="44">
         <div class="product-img pi6">
           <img src="Peptide.jpg" alt="Collagen Jelly Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
@@ -169,7 +197,7 @@
 
       <div class="product-card" data-category="serums" data-name="Pore Tightening Serum" data-price="44">
         <div class="product-img pi1">
-          <img src="Pink toner.jpg" alt="Pore Tightening Serum">
+          <img src="collagen shot pink.jpg" alt="Pore Tightening Serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -180,22 +208,9 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="devices" data-name="Deep Vita Booster" data-price="159">
-        <div class="product-img pi2">
-          <img src="Red acid serum.jpg" alt="Deep Vita Booster">
-          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
-        </div>
-        <div class="product-info">
-          <span class="prod-brand">Medicube</span>
-          <h3 class="prod-name">Deep Vita Booster</h3>
-          <div class="prod-stars"><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-half-filled"></i><span>4.5 (211)</span></div>
-          <div class="prod-bottom"><span class="prod-price">$159</span><button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus"></i></button></div>
-        </div>
-      </div>
-
       <div class="product-card" data-category="serums" data-name="Vita Bright Ampoule" data-price="42">
         <div class="product-img pi3">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Red serum.jpg" alt="red serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">New</span>
         </div>
@@ -235,7 +250,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Pore Clarifying Gel" data-price="26">
         <div class="product-img pi6">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Collagen cleansing.jpg" alt="collagen cleansing">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -248,7 +263,7 @@
 
       <div class="product-card" data-category="pads" data-name="Glow Peeling Pads" data-price="30">
         <div class="product-img pi1">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Mask.jpg" alt="mask">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge prod-badge-sale">Sale</span>
         </div>
@@ -262,7 +277,7 @@
 
       <div class="product-card" data-category="serums" data-name="Hyaluronic Filler Serum" data-price="46">
         <div class="product-img pi2">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Age R serum.jpg" alt="Age R serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -303,7 +318,7 @@
 
       <div class="product-card" data-category="serums" data-name="Niacinamide Pore Serum" data-price="48">
         <div class="product-img pi1">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Blue serum.jpg" alt="Blue serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -316,7 +331,7 @@
 
       <div class="product-card" data-category="serums" data-name="Vitamin C Glow Drops" data-price="35">
         <div class="product-img pi2">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Exo Serums.jpg" alt="Exo Serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -329,7 +344,7 @@
 
       <div class="product-card" data-category="serums" data-name="Retinol Renewal Serum" data-price="49">
         <div class="product-img pi3">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Glow Serum" alt="Glow serum serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -342,7 +357,7 @@
 
       <div class="product-card" data-category="serums" data-name="Centella Calming Serum" data-price="46">
         <div class="product-img pi4">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Jelly Mist Serum.jpg" alt="Jelly mist serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -355,7 +370,7 @@
 
       <div class="product-card" data-category="serums" data-name="AHA Resurfacing Serum" data-price="34">
         <div class="product-img pi5">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Niacin serum.jpg" alt="Niacin Serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -368,7 +383,7 @@
 
       <div class="product-card" data-category="serums" data-name="Peptide Firming Serum" data-price="45">
         <div class="product-img pi6">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="One day serum.jpg" alt="One day serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge prod-badge-sale">Sale</span>
         </div>
@@ -382,7 +397,7 @@
 
       <div class="product-card" data-category="serums" data-name="Snail Mucin Repair Serum" data-price="41">
         <div class="product-img pi1">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="PDRN serum.jpg" alt="PDRN serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -395,7 +410,7 @@
 
       <div class="product-card" data-category="serums" data-name="Green Tea Balancing Serum" data-price="53">
         <div class="product-img pi2">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Retinol Serum.jpg" alt="Retinol serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -408,7 +423,7 @@
 
       <div class="product-card" data-category="serums" data-name="Rice Bran Brightening Serum" data-price="50">
         <div class="product-img pi3">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Yellow serum.jpg" alt="Yellow serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -421,7 +436,7 @@
 
       <div class="product-card" data-category="serums" data-name="Azelaic Spot Corrector" data-price="34">
         <div class="product-img pi4">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Pore zero serum.jpg" alt="pore zero serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -434,7 +449,7 @@
 
       <div class="product-card" data-category="moisturizers" data-name="Cica Soothing Gel Cream" data-price="37">
         <div class="product-img pi5">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="white cream.jpg" alt="white cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -487,7 +502,7 @@
 
       <div class="product-card" data-category="moisturizers" data-name="Marine Collagen Cream" data-price="44">
         <div class="product-img pi3">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Triple cream.jpg" alt="Triple Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge prod-badge-sale">Sale</span>
         </div>
@@ -501,7 +516,7 @@
 
       <div class="product-card" data-category="moisturizers" data-name="Shea Comfort Cream" data-price="50">
         <div class="product-img pi4">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="peptide cream.jpg" alt="peptide cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -514,7 +529,7 @@
 
       <div class="product-card" data-category="moisturizers" data-name="Barrier Boost Emulsion" data-price="38">
         <div class="product-img pi5">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Calming cream.jpg" alt="calming cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge prod-badge-sale">Sale</span>
         </div>
@@ -528,7 +543,7 @@
 
       <div class="product-card" data-category="moisturizers" data-name="Aqua Bounce Sleeping Mask" data-price="55">
         <div class="product-img pi6">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="White Gel.jpg" alt="White gel">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -541,7 +556,7 @@
 
       <div class="product-card" data-category="moisturizers" data-name="Vitamin E Nourish Cream" data-price="49">
         <div class="product-img pi1">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Pink gel.jpg" alt="Pink Gel">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge prod-badge-sale">Sale</span>
         </div>
@@ -608,7 +623,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Rice Water Cleansing Foam" data-price="24">
         <div class="product-img pi4">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Blue cleanser.jpg" alt="Blue cleanser">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -621,7 +636,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Oil-to-Foam Cleanser" data-price="21">
         <div class="product-img pi5">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Foam Cleanser.jpg" alt="pore zero serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">Best</span>
         </div>
@@ -635,7 +650,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Micellar Cleansing Water" data-price="25">
         <div class="product-img pi6">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Pink Cleanser.jpg" alt="Pink cleanser">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -648,7 +663,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Charcoal Detox Cleanser" data-price="20">
         <div class="product-img pi1">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Red cleanser.jpg" alt="Red Cleanser">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge prod-badge-sale">Sale</span>
         </div>
@@ -662,7 +677,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Low pH Gel Wash" data-price="27">
         <div class="product-img pi2">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="white cleanser.jpg" alt="White cleanser">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">Best</span>
         </div>
@@ -676,7 +691,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Milk Cleansing Balm" data-price="25">
         <div class="product-img pi3">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Yellow cleanser.jpg" alt="Yellow cleanser">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -689,7 +704,7 @@
 
       <div class="product-card" data-category="cleansers" data-name="Enzyme Powder Cleanser" data-price="28">
         <div class="product-img pi4">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Aze cleanser.jpg" alt="Aze Cleanser">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">Best</span>
         </div>
@@ -703,7 +718,7 @@
 
       <div class="product-card" data-category="pads" data-name="Centella Calming Pads" data-price="30">
         <div class="product-img pi5">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="wrap mask.jpg" alt="wrapping mask">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -716,7 +731,7 @@
 
       <div class="product-card" data-category="pads" data-name="Vitamin C Glow Pads" data-price="31">
         <div class="product-img pi6">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="yellow creamy mask.jpg" alt="yellow creamy mask">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -729,7 +744,7 @@
 
       <div class="product-card" data-category="pads" data-name="Hydrating Sheet Mask Set" data-price="30">
         <div class="product-img pi1">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Deep vita pad.jpg" alt="deep vita pad">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -742,7 +757,7 @@
 
       <div class="product-card" data-category="pads" data-name="Overnight Recovery Patches" data-price="38">
         <div class="product-img pi2">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Pink Collagen Masks.jpg" alt="pink collagen mask">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -755,7 +770,7 @@
 
       <div class="product-card" data-category="pads" data-name="Clay Detox Mask" data-price="38">
         <div class="product-img pi3">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Pink pad.jpg" alt="pink pad">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
@@ -768,7 +783,7 @@
 
       <div class="product-card" data-category="pads" data-name="Collagen Eye Patches" data-price="27">
         <div class="product-img pi4">
-          <div class="prod-ph"><i class="ti ti-photo" aria-hidden="true"></i></div>
+          <img src="Red pad.jpg" alt="red pad">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
           <span class="prod-badge">Best</span>
         </div>
