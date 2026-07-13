@@ -400,16 +400,23 @@ function initFilters() {
   const cards      = document.querySelectorAll('[data-category]');
   if (!filterBtns.length) return;
 
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      filterBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const filter = btn.dataset.filter;
-      cards.forEach(card => {
-        card.style.display = (filter === 'all' || card.dataset.category === filter) ? '' : 'none';
-      });
+  function applyFilter(filter) {
+    filterBtns.forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+    cards.forEach(card => {
+      card.style.display = (filter === 'all' || card.dataset.category === filter) ? '' : 'none';
     });
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => applyFilter(btn.dataset.filter));
   });
+
+  // Support linking straight into a filtered view, e.g. shop.html?filter=serums
+  const params = new URLSearchParams(window.location.search);
+  const requested = params.get('filter');
+  if (requested && [...filterBtns].some(b => b.dataset.filter === requested)) {
+    applyFilter(requested);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────
