@@ -1,0 +1,18 @@
+{
+  "name": "jesi-cosmetic-backend",
+  "version": "1.0.0",
+  "description": "Node.js + MySQL backend API for JESI-COSMETIC storefront",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node db/seed.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mysql2": "^3.11.0",
+    "cors": "^2.8.5",
+    "cookie-parser": "^1.4.6",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.4.5"
+  }
+}

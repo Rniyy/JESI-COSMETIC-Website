@@ -197,10 +197,10 @@ function initCart() {
         const addJson = await addRes.json();
         if (addJson.success) {
           showToast(`${productName} added to cart`);
-          // Reload badge count
-          const cartRes  = await fetch(`${API}/cart`, { credentials: 'include' });
-          const cartJson = await cartRes.json();
-          updateBadge(cartJson.item_count);
+          // Refresh badge AND the panel's item list (in case it's already open)
+          loadCart();
+        } else {
+          showToast(addJson.message || 'Could not add to cart', 'error');
         }
       } catch (err) {
         showToast('Could not add to cart', 'error');
@@ -217,13 +217,40 @@ function initCart() {
       if (json.success) updateBadge(json.item_count);
     } catch (_) {}
   })();
+
+  // Refresh when another part of the page (e.g. Quick View) adds an item
+  document.addEventListener('cart:changed', loadCart);
 }
 
 /* ─────────────────────────────────────────────────────────
    WISHLIST — heart button toggle
 ───────────────────────────────────────────────────────── */
 function initWishlist() {
-  const wishlistBadge = document.getElementById('wishlistBadge');
+  const wishlistBadge   = document.getElementById('wishlistBadge');
+  const wishlistBtn     = document.getElementById('wishlistBtn');
+  const wishlistPanel   = document.getElementById('wishlistPanel');
+  const wishlistOverlay = document.getElementById('wishlistOverlay');
+  const wishlistClose   = document.getElementById('wishlistClose');
+  const wishlistItems   = document.getElementById('wishlistItems');
+  const wishlistEmpty   = document.getElementById('wishlistEmpty');
+
+  // Open / close panel
+  function openWishlist() {
+    if (!wishlistPanel) return;
+    wishlistPanel.classList.add('open');
+    wishlistOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    loadWishlist();
+  }
+  function closeWishlist() {
+    if (!wishlistPanel) return;
+    wishlistPanel.classList.remove('open');
+    wishlistOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  if (wishlistBtn)     wishlistBtn.addEventListener('click', openWishlist);
+  if (wishlistClose)   wishlistClose.addEventListener('click', closeWishlist);
+  if (wishlistOverlay) wishlistOverlay.addEventListener('click', closeWishlist);
 
   async function updateWishlistBadge() {
     try {
@@ -235,23 +262,69 @@ function initWishlist() {
     } catch (_) {}
   }
 
-  // Load saved wishlist IDs to mark hearts as active
-  async function markSavedWishlists() {
+  // Load wishlist items into the slide-out panel, and mark matching hearts as active
+  async function loadWishlist() {
     try {
       const res  = await fetch(`${API}/wishlist`, { credentials: 'include' });
       const json = await res.json();
-      if (!json.success) return;
-      const savedIds = json.data.map(i => String(i.product_id));
+      if (!json.success) throw new Error(json.message);
 
+      const items = json.data;
+      if (wishlistBadge) {
+        wishlistBadge.textContent   = json.count;
+        wishlistBadge.style.display = json.count > 0 ? '' : 'none';
+      }
+
+      // Mark hearts on product cards as active for saved items
+      const savedIds = items.map(i => String(i.product_id));
       document.querySelectorAll('.wish-btn').forEach(btn => {
         const card = btn.closest('[data-name]');
-        if (!card) return;
-        // We'll match by stored attribute after we resolve IDs — for now mark on product_id in dataset
-        if (card.dataset.productId && savedIds.includes(card.dataset.productId)) {
-          btn.classList.add('wished');
+        if (card && card.dataset.productId) {
+          btn.classList.toggle('wished', savedIds.includes(card.dataset.productId));
         }
       });
-    } catch (_) {}
+
+      if (!wishlistItems) return;
+
+      // Clear previous rows (keep empty message)
+      wishlistItems.querySelectorAll('.cart-item').forEach(el => el.remove());
+
+      if (items.length === 0) {
+        if (wishlistEmpty) wishlistEmpty.style.display = '';
+        return;
+      }
+      if (wishlistEmpty) wishlistEmpty.style.display = 'none';
+
+      items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'cart-item';
+        row.innerHTML = `
+          <div class="cart-item-img ${item.image_class}">
+            ${item.image_url ? `<img src="${item.image_url}" alt="${item.name}">` : '<i class="ti ti-photo" aria-hidden="true"></i>'}
+          </div>
+          <div class="cart-item-info">
+            <span class="cart-item-brand">Medicube</span>
+            <span class="cart-item-name">${item.name}</span>
+            <span class="cart-item-price">$${parseFloat(item.price).toFixed(2)}${item.old_price ? ` <s>$${parseFloat(item.old_price).toFixed(2)}</s>` : ''}</span>
+          </div>
+          <div class="cart-item-actions">
+            <button class="cart-remove" data-id="${item.product_id}" aria-label="Remove from wishlist">
+              <i class="ti ti-trash" aria-hidden="true"></i>
+            </button>
+          </div>
+        `;
+        wishlistItems.appendChild(row);
+      });
+
+      wishlistItems.querySelectorAll('.cart-remove').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await fetch(`${API}/wishlist/${btn.dataset.id}`, { method: 'DELETE', credentials: 'include' });
+          loadWishlist();
+        });
+      });
+    } catch (err) {
+      console.error('Wishlist load error:', err);
+    }
   }
 
   document.querySelectorAll('.wish-btn').forEach(btn => {
@@ -286,7 +359,8 @@ function initWishlist() {
           btn.classList.add('wished');
           showToast(`${productName} saved to wishlist`);
         }
-        updateWishlistBadge();
+        // Refresh badge, and the panel's rows if it's open
+        loadWishlist();
       } catch (err) {
         console.error('Wishlist error:', err);
       }
@@ -294,7 +368,6 @@ function initWishlist() {
   });
 
   updateWishlistBadge();
-  markSavedWishlists();
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -555,14 +628,11 @@ function initQuickView() {
       const addJson = await addRes.json();
       if (addJson.success) {
         showToast(`${productName} added to cart`);
-        const cartBadge = document.getElementById('cartBadge');
-        const cartRes  = await fetch(`${API}/cart`, { credentials: 'include' });
-        const cartJson = await cartRes.json();
-        if (cartBadge) {
-          cartBadge.textContent   = cartJson.item_count;
-          cartBadge.style.display = cartJson.item_count > 0 ? '' : 'none';
-        }
+        // Dispatch a custom event so initCart's loadCart() (in closure scope) can refresh
+        document.dispatchEvent(new CustomEvent('cart:changed'));
         closeModal();
+      } else {
+        showToast(addJson.message || 'Could not add to cart', 'error');
       }
     } catch (err) {
       showToast('Could not add to cart', 'error');

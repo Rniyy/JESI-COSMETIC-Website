@@ -61,6 +61,22 @@
     </div>
   </aside>
 
+  <!-- WISHLIST PANEL -->
+  <div class="cart-overlay" id="wishlistOverlay"></div>
+  <aside class="cart-panel" id="wishlistPanel" aria-label="Wishlist">
+    <div class="cart-panel-head">
+      <h2>Your wishlist</h2>
+      <button class="cart-close" id="wishlistClose" aria-label="Close wishlist"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="cart-items" id="wishlistItems">
+      <div class="cart-empty" id="wishlistEmpty">
+        <i class="ti ti-heart" aria-hidden="true"></i>
+        <p>Your wishlist is empty</p>
+        <span>Tap the heart on any product to save it here.</span>
+      </div>
+    </div>
+  </aside>
+
   <!-- SEARCH RESULTS DROPDOWN (lives next to search input via JS positioning) -->
   <div class="search-results" id="searchResults"></div>
 
@@ -344,7 +360,7 @@
 
       <div class="product-card" data-category="serums" data-name="Collagen Glow Booster Milk Serum" data-price="32">
         <div class="product-img pi3">
-          <img src="Glow Serum" alt="Glow serum serum">
+          <img src="Glow Serum.jpg" alt="Glow serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
