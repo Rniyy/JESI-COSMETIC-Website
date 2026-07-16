@@ -2,7 +2,7 @@
   {
     "name": "Age R Booster Pro",
     "category": "devices",
-    "price": "189",
+    "price": "128",
     "old_price": null,
     "image_url": "Booster.jpg",
     "image_class": "pi1",
@@ -13,7 +13,7 @@
   {
     "name": "Red Erasing Serum",
     "category": "serums",
-    "price": "38",
+    "price": "18",
     "old_price": null,
     "image_url": "Red acid serum.jpg",
     "image_class": "pi2",
@@ -24,7 +24,7 @@
   {
     "name": "Zero Pore One Day Cream",
     "category": "moisturizers",
-    "price": "28",
+    "price": "17",
     "old_price": null,
     "image_url": "one day cream.jpg",
     "image_class": "pi3",
@@ -35,7 +35,7 @@
   {
     "name": "Kojic Acid Turmeric Gold Jelly Gel Mask",
     "category": "pads",
-    "price": "28",
+    "price": "22",
     "old_price": null,
     "image_url": "yellow mask.jpg",
     "image_class": "pi4",
@@ -46,7 +46,7 @@
   {
     "name": "PDRN Hydrating Gel Cleanser",
     "category": "cleansers",
-    "price": "24",
+    "price": "15",
     "old_price": null,
     "image_url": "Red gel cleansing.jpg",
     "image_class": "pi5",
@@ -57,7 +57,7 @@
   {
     "name": "PDRN Pink One Day Serum",
     "category": "serums",
-    "price": "44",
+    "price": "17",
     "old_price": "58",
     "image_url": "Peptide.jpg",
     "image_class": "pi6",
@@ -68,7 +68,7 @@
   {
     "name": "Pore Tightening Serum",
     "category": "serums",
-    "price": "44",
+    "price": "14",
     "old_price": null,
     "image_url": "collagen shot pink.jpg",
     "image_class": "pi1",
@@ -90,7 +90,7 @@
   {
     "name": "AGE-R ATS Air Shot",
     "category": "devices",
-    "price": "160",
+    "price": "118",
     "old_price": null,
     "image_url": "Device 3.jpg",
     "image_class": "pi5",
@@ -101,7 +101,7 @@
   {
     "name": "PDRN Pink Niacinamide Whip Cleanser",
     "category": "cleansers",
-    "price": "15",
+    "price": "12",
     "old_price": null,
     "image_url": "Collagen cleansing.jpg",
     "image_class": "pi6",
@@ -112,7 +112,7 @@
   {
     "name": "Deep Vita C Daily Quick Mask (30 Sheets)",
     "category": "pads",
-    "price": "21",
+    "price": "28",
     "old_price": "36",
     "image_url": "Mask.jpg",
     "image_class": "pi1",
@@ -123,7 +123,7 @@
   {
     "name": "AGE-R Glutathione Glow Serum",
     "category": "serums",
-    "price": "30",
+    "price": "18",
     "old_price": null,
     "image_url": "Age R serum.jpg",
     "image_class": "pi2",
@@ -134,7 +134,7 @@
   {
     "name": "AGE-R Booster Pro Mini Plus & Cleansing Head Set",
     "category": "devices",
-    "price": "150",
+    "price": "162",
     "old_price": null,
     "image_url": "Device Pink.jpg",
     "image_class": "pi3",
@@ -156,7 +156,7 @@
   {
     "name": "Hyaluronic Multi Peptide Serum",
     "category": "serums",
-    "price": "28",
+    "price": "16",
     "old_price": null,
     "image_url": "Blue serum.jpg",
     "image_class": "pi1",
@@ -167,7 +167,7 @@
   {
     "name": "Azelaic Acid Exosome Shot 2000",
     "category": "serums",
-    "price": "35",
+    "price": "22",
     "old_price": null,
     "image_url": "Exo Serums.jpg",
     "image_class": "pi2",
@@ -178,7 +178,7 @@
   {
     "name": "Collagen Glow Booster Milk Serum",
     "category": "serums",
-    "price": "32",
+    "price": "23",
     "old_price": null,
     "image_url": "Glow Serum.jpg",
     "image_class": "pi3",
@@ -189,7 +189,7 @@
   {
     "name": "PDRN Pink Collagen Glow Jelly Mist Serum",
     "category": "serums",
-    "price": "29",
+    "price": "19",
     "old_price": null,
     "image_url": "Jelly Mist Serum.jpg",
     "image_class": "pi4",
@@ -200,7 +200,7 @@
   {
     "name": "TXA Niacinamide 15 Serum",
     "category": "serums",
-    "price": "34",
+    "price": "16",
     "old_price": null,
     "image_url": "Niacin serum.jpg",
     "image_class": "pi5",
@@ -211,7 +211,7 @@
   {
     "name": "One Day Exosome Shot 2000",
     "category": "serums",
-    "price": "45",
+    "price": "22",
     "old_price": "59",
     "image_url": "One day serum.jpg",
     "image_class": "pi6",
@@ -222,7 +222,7 @@
   {
     "name": "PDRN Pink Peptide Serum",
     "category": "serums",
-    "price": "41",
+    "price": "15",
     "old_price": null,
     "image_url": "PDRN serum.jpg",
     "image_class": "pi1",
@@ -233,7 +233,7 @@
   {
     "name": "Retinol NMN Boosting Serum 1.9%",
     "category": "serums",
-    "price": "33",
+    "price": "21",
     "old_price": null,
     "image_url": "Retinol Serum.jpg",
     "image_class": "pi2",
@@ -244,7 +244,7 @@
   {
     "name": "Kojic Acid Turmeric Niacinamide Serum",
     "category": "serums",
-    "price": "28",
+    "price": "18",
     "old_price": null,
     "image_url": "Yellow serum.jpg",
     "image_class": "pi3",
@@ -255,7 +255,7 @@
   {
     "name": "Zero Pore One Day Serum",
     "category": "serums",
-    "price": "26",
+    "price": "16",
     "old_price": null,
     "image_url": "Pore zero serum.jpg",
     "image_class": "pi4",
@@ -266,7 +266,7 @@
   {
     "name": "Red Cream 2.0",
     "category": "moisturizers",
-    "price": "28",
+    "price": "16",
     "old_price": null,
     "image_url": "white cream.jpg",
     "image_class": "pi5",
@@ -277,7 +277,7 @@
   {
     "name": "TXA Niacinamide Capsule Cream",
     "category": "moisturizers",
-    "price": "26",
+    "price": "19",
     "old_price": null,
     "image_url": "Cream red.jpg",
     "image_class": "pi6",
@@ -288,7 +288,7 @@
   {
     "name": "Deep Vita C Capsule Cream",
     "category": "moisturizers",
-    "price": "26",
+    "price": "22",
     "old_price": null,
     "image_url": "cream brown.jpg",
     "image_class": "pi1",
@@ -299,7 +299,7 @@
   {
     "name": "PDRN Pink Collagen Capsule Cream",
     "category": "moisturizers",
-    "price": "26",
+    "price": "19",
     "old_price": null,
     "image_url": "cream pink.jpg",
     "image_class": "pi2",
@@ -310,7 +310,7 @@
   {
     "name": "Triple Collagen Cream",
     "category": "moisturizers",
-    "price": "30",
+    "price": "17",
     "old_price": "53",
     "image_url": "Triple cream.jpg",
     "image_class": "pi3",
@@ -321,7 +321,7 @@
   {
     "name": "PDRN Pink Peptide Serum",
     "category": "moisturizers",
-    "price": "8",
+    "price": "18",
     "old_price": null,
     "image_url": "peptide cream.jpg",
     "image_class": "pi4",
@@ -332,7 +332,7 @@
   {
     "name": "Medicube 3H Daily Relief Cream",
     "category": "moisturizers",
-    "price": "26",
+    "price": "14",
     "old_price": "57",
     "image_url": "Calming cream.jpg",
     "image_class": "pi5",
@@ -343,7 +343,7 @@
   {
     "name": "AGE-R Booster Gel Serum",
     "category": "moisturizers",
-    "price": "35",
+    "price": "24",
     "old_price": null,
     "image_url": "White Gel.jpg",
     "image_class": "pi6",
@@ -354,7 +354,7 @@
   {
     "name": "AGE-R Collagen Booster Gel Serum",
     "category": "moisturizers",
-    "price": "32",
+    "price": "22",
     "old_price": "56",
     "image_url": "Pink gel.jpg",
     "image_class": "pi1",
@@ -376,7 +376,7 @@
   {
     "name": "AGE-R I Shot",
     "category": "devices",
-    "price": "187",
+    "price": "148",
     "old_price": "201",
     "image_url": "Device R.jpg",
     "image_class": "pi3",
@@ -398,7 +398,7 @@
   {
     "name": "Zero Pore SA Clear Capsule Cleansing Foam",
     "category": "cleansers",
-    "price": "18",
+    "price": "16",
     "old_price": null,
     "image_url": "Blue cleanser.jpg",
     "image_class": "pi4",
@@ -409,7 +409,7 @@
   {
     "name": "Zero Foam Cleanser",
     "category": "cleansers",
-    "price": "16",
+    "price": "14",
     "old_price": null,
     "image_url": "Foam Cleanser.jpg",
     "image_class": "pi5",
@@ -420,7 +420,7 @@
   {
     "name": "PDRN Pink Glutathione Capsule Cleansing Foam",
     "category": "cleansers",
-    "price": "25",
+    "price": "15",
     "old_price": null,
     "image_url": "Pink Cleanser.jpg",
     "image_class": "pi6",
@@ -475,7 +475,7 @@
   {
     "name": "Collagen Night Wrapping Mask (75ml)",
     "category": "pads",
-    "price": "21",
+    "price": "16",
     "old_price": null,
     "image_url": "wrap mask.jpg",
     "image_class": "pi5",
@@ -497,7 +497,7 @@
   {
     "name": "Deep Vita C Pad (70 Pads)",
     "category": "pads",
-    "price": "25",
+    "price": "23",
     "old_price": null,
     "image_url": "Deep vita pad.jpg",
     "image_class": "pi1",
@@ -508,7 +508,7 @@
   {
     "name": "PDRN Pink Collagen Gel Mask (4 Sheets)",
     "category": "pads",
-    "price": "22",
+    "price": "12",
     "old_price": null,
     "image_url": "Pink Collagen Masks.jpg",
     "image_class": "pi2",
@@ -519,7 +519,7 @@
   {
     "name": "PDRN Pink Collagen Toning Gel Toner Pad (70 Pads)",
     "category": "pads",
-    "price": "22",
+    "price": "23",
     "old_price": null,
     "image_url": "Pink pad.jpg",
     "image_class": "pi3",
@@ -552,7 +552,7 @@
   {
     "name": "Zero Pore Perfecting Set",
     "category": "sets",
-    "price": "89",
+    "price": "87",
     "old_price": null,
     "image_url": "Blue set.jpg",
     "image_class": "pi1",
@@ -563,7 +563,7 @@
   {
     "name": "Red Line Starter Set",
     "category": "sets",
-    "price": "92",
+    "price": "82",
     "old_price": null,
     "image_url": "White Full Set.jpg",
     "image_class": "pi5",
@@ -574,11 +574,22 @@
   {
     "name": "Rosemary PDRN Hair Care / Scalp Care Set",
     "category": "sets",
-    "price": "84",
+    "price": "76",
     "old_price": null,
     "image_url": "Hair set.jpg",
     "image_class": "pi6",
     "rating": "4.6",
+    "reviews": "134",
+    "badge": null
+  },
+  {
+    "name": "Red Succinic Acid Serum",
+    "category": "serums",
+    "price": "12",
+    "old_price": null,
+    "image_url": "Red acid serum.jpg",
+    "image_class": "pi6",
+    "rating": "4.2",
     "reviews": "134",
     "badge": null
   }
