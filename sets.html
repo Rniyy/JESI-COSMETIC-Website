@@ -6,6 +6,7 @@
   <title>Sets — JESI-COSMETIC</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
 
@@ -22,19 +23,159 @@
         <li><a href="about.html">About</a></li>
       </ul>
       <div class="nav-right">
-        <div class="search-wrap">
+        <div class="search-wrap" id="searchWrap">
           <i class="ti ti-search" aria-hidden="true"></i>
-          <input type="text" placeholder="Search Medicube..." aria-label="Search products" />
+          <input type="text" id="searchInput" placeholder="Search Medicube..." aria-label="Search products" autocomplete="off" />
         </div>
-        <button class="icon-btn" aria-label="Wishlist"><i class="ti ti-heart"></i></button>
-        <button class="icon-btn" aria-label="Cart">
+        <button class="icon-btn" id="accountBtn" aria-label="Account">
+          <i class="ti ti-user"></i>
+        </button>
+        <button class="icon-btn" id="wishlistBtn" aria-label="Wishlist">
+          <i class="ti ti-heart"></i>
+          <span class="badge" id="wishlistBadge" style="display:none;">0</span>
+        </button>
+        <button class="icon-btn" id="cartBtn" aria-label="Cart">
           <i class="ti ti-shopping-bag"></i>
-          <span class="badge">2</span>
+          <span class="badge" id="cartBadge" style="display:none;">0</span>
         </button>
         <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><i class="ti ti-menu-2"></i></button>
       </div>
     </div>
   </nav>
+
+  <!-- CART PANEL -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-panel" id="cartPanel" aria-label="Shopping cart">
+    <div class="cart-panel-head">
+      <h2>Your cart</h2>
+      <button class="cart-close" id="cartClose" aria-label="Close cart"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty" id="cartEmpty">
+        <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+        <p>Your cart is empty</p>
+        <span>Add some Medicube favorites to get started.</span>
+      </div>
+    </div>
+    <div class="cart-panel-foot" id="cartFoot">
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">$0</span>
+      </div>
+      <a class="cart-checkout-btn" href="#">Checkout <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+    </div>
+  </aside>
+
+  <!-- WISHLIST PANEL -->
+  <div class="cart-overlay" id="wishlistOverlay"></div>
+  <aside class="cart-panel" id="wishlistPanel" aria-label="Wishlist">
+    <div class="cart-panel-head">
+      <h2>Your wishlist</h2>
+      <button class="cart-close" id="wishlistClose" aria-label="Close wishlist"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="cart-items" id="wishlistItems">
+      <div class="cart-empty" id="wishlistEmpty">
+        <i class="ti ti-heart" aria-hidden="true"></i>
+        <p>Your wishlist is empty</p>
+        <span>Tap the heart on any product to save it here.</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ACCOUNT / AUTH PANEL -->
+  <div class="cart-overlay" id="authOverlay"></div>
+  <aside class="cart-panel" id="authPanel" aria-label="Account">
+    <div class="cart-panel-head">
+      <h2 id="authPanelTitle">Log in</h2>
+      <button class="cart-close" id="authClose" aria-label="Close account panel"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="auth-body" id="authBody">
+
+      <!-- LOGIN VIEW -->
+      <form class="auth-form" id="loginForm">
+        <p class="auth-error" id="loginError" style="display:none;"></p>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="loginEmail" required autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input class="auth-input" type="password" id="loginPassword" required autocomplete="current-password" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Log in</button>
+        <button class="auth-link-btn" type="button" id="showForgotForm">Forgot password?</button>
+        <p class="auth-switch">No account? <button class="auth-link-btn" type="button" id="showRegisterForm">Sign up</button></p>
+      </form>
+
+      <!-- REGISTER VIEW -->
+      <form class="auth-form" id="registerForm" style="display:none;">
+        <p class="auth-error" id="registerError" style="display:none;"></p>
+        <label class="auth-label">Name
+          <input class="auth-input" type="text" id="registerName" required autocomplete="name" />
+        </label>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="registerEmail" required autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input class="auth-input" type="password" id="registerPassword" required minlength="8" autocomplete="new-password" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Create account</button>
+        <p class="auth-switch">Already have an account? <button class="auth-link-btn" type="button" id="showLoginFormFromRegister">Log in</button></p>
+      </form>
+
+      <!-- FORGOT PASSWORD VIEW -->
+      <form class="auth-form" id="forgotForm" style="display:none;">
+        <p class="auth-note">Enter your email and we'll generate a reset link (check the server console for now — email sending isn't wired up yet).</p>
+        <p class="auth-success" id="forgotSuccess" style="display:none;"></p>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="forgotEmail" required autocomplete="email" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Send reset link</button>
+        <p class="auth-switch"><button class="auth-link-btn" type="button" id="showLoginFormFromForgot">Back to log in</button></p>
+      </form>
+
+      <!-- LOGGED-IN VIEW -->
+      <div class="auth-account" id="authAccountView" style="display:none;">
+        <div class="auth-account-info">
+          <i class="ti ti-user-circle auth-account-icon" aria-hidden="true"></i>
+          <p class="auth-account-name" id="accountName"></p>
+          <p class="auth-account-email" id="accountEmail"></p>
+        </div>
+        <button class="auth-submit-btn auth-logout-btn" id="logoutBtn">Log out</button>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- SEARCH RESULTS DROPDOWN -->
+  <div class="search-results" id="searchResults"></div>
+
+  <!-- QUICK VIEW MODAL -->
+  <div class="qv-overlay" id="qvOverlay"></div>
+  <div class="qv-modal" id="qvModal" role="dialog" aria-modal="true" aria-label="Product details">
+    <button class="qv-close" id="qvClose" aria-label="Close product details"><i class="ti ti-x"></i></button>
+    <div class="qv-body">
+      <div class="qv-img" id="qvImg"></div>
+      <div class="qv-info">
+        <span class="prod-brand">Medicube</span>
+        <h2 class="qv-name" id="qvName"></h2>
+        <div class="prod-stars" id="qvStars"></div>
+        <div class="qv-price" id="qvPrice"></div>
+        <p class="qv-desc" id="qvDesc"></p>
+        <div class="qv-qty">
+          <span>Quantity</span>
+          <div class="qty-wrap">
+            <button class="qty-btn" id="qvDec" aria-label="Decrease quantity">−</button>
+            <span class="qty-num" id="qvQtyNum">1</span>
+            <button class="qty-btn" id="qvInc" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+        <div class="qv-actions">
+          <button class="qv-add-cart" id="qvAddCart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i> Add to cart</button>
+          <button class="wish-btn qv-wish" id="qvWish" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- PAGE HEADER -->
   <div class="page-header">
@@ -55,7 +196,7 @@
   <div class="shop-grid-wrap">
     <div class="products-grid">
 
-      <div class="product-card" data-category="sets">
+      <div class="product-card" data-category="sets" data-name="Triple Collagen Deep Glow Set" data-price="98">
         <div class="product-img pi3">
           <img src="Pink set.jpg" alt="Calm & Restore Set">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
@@ -69,7 +210,7 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="sets">
+      <div class="product-card" data-category="sets" data-name="Zero Pore Perfecting Set" data-price="89">
         <div class="product-img pi1">
           <img src="Blue set.jpg" alt="Glow Starter Kit">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
@@ -82,7 +223,7 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="sets">
+      <div class="product-card" data-category="sets" data-name="Red Line Starter Set" data-price="92">
         <div class="product-img pi5">
           <img src="White Full Set.jpg" alt="Pore Care Duo">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
@@ -96,7 +237,7 @@
         </div>
       </div>
 
-      <div class="product-card" data-category="sets">
+      <div class="product-card" data-category="sets" data-name="Rosemary PDRN Hair Care / Scalp Care Set" data-price="84">
         <div class="product-img pi6">
           <img src="Hair set.jpg" alt="Night Recovery Set">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>

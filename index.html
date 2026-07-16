@@ -6,6 +6,7 @@
   <title>JESI-COSMETIC — Medicube Official Reseller</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
 
@@ -26,6 +27,9 @@
           <i class="ti ti-search" aria-hidden="true"></i>
           <input type="text" id="searchInput" placeholder="Search Medicube..." aria-label="Search products" autocomplete="off" />
         </div>
+        <button class="icon-btn" id="accountBtn" aria-label="Account">
+          <i class="ti ti-user"></i>
+        </button>
         <button class="icon-btn" id="wishlistBtn" aria-label="Wishlist">
           <i class="ti ti-heart"></i>
           <span class="badge" id="wishlistBadge" style="display:none;">0</span>
@@ -62,8 +66,116 @@
     </div>
   </aside>
 
+  <!-- WISHLIST PANEL -->
+  <div class="cart-overlay" id="wishlistOverlay"></div>
+  <aside class="cart-panel" id="wishlistPanel" aria-label="Wishlist">
+    <div class="cart-panel-head">
+      <h2>Your wishlist</h2>
+      <button class="cart-close" id="wishlistClose" aria-label="Close wishlist"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="cart-items" id="wishlistItems">
+      <div class="cart-empty" id="wishlistEmpty">
+        <i class="ti ti-heart" aria-hidden="true"></i>
+        <p>Your wishlist is empty</p>
+        <span>Tap the heart on any product to save it here.</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ACCOUNT / AUTH PANEL -->
+  <div class="cart-overlay" id="authOverlay"></div>
+  <aside class="cart-panel" id="authPanel" aria-label="Account">
+    <div class="cart-panel-head">
+      <h2 id="authPanelTitle">Log in</h2>
+      <button class="cart-close" id="authClose" aria-label="Close account panel"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="auth-body" id="authBody">
+
+      <!-- LOGIN VIEW -->
+      <form class="auth-form" id="loginForm">
+        <p class="auth-error" id="loginError" style="display:none;"></p>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="loginEmail" required autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input class="auth-input" type="password" id="loginPassword" required autocomplete="current-password" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Log in</button>
+        <button class="auth-link-btn" type="button" id="showForgotForm">Forgot password?</button>
+        <p class="auth-switch">No account? <button class="auth-link-btn" type="button" id="showRegisterForm">Sign up</button></p>
+      </form>
+
+      <!-- REGISTER VIEW -->
+      <form class="auth-form" id="registerForm" style="display:none;">
+        <p class="auth-error" id="registerError" style="display:none;"></p>
+        <label class="auth-label">Name
+          <input class="auth-input" type="text" id="registerName" required autocomplete="name" />
+        </label>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="registerEmail" required autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input class="auth-input" type="password" id="registerPassword" required minlength="8" autocomplete="new-password" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Create account</button>
+        <p class="auth-switch">Already have an account? <button class="auth-link-btn" type="button" id="showLoginFormFromRegister">Log in</button></p>
+      </form>
+
+      <!-- FORGOT PASSWORD VIEW -->
+      <form class="auth-form" id="forgotForm" style="display:none;">
+        <p class="auth-note">Enter your email and we'll generate a reset link (check the server console for now — email sending isn't wired up yet).</p>
+        <p class="auth-success" id="forgotSuccess" style="display:none;"></p>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="forgotEmail" required autocomplete="email" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Send reset link</button>
+        <p class="auth-switch"><button class="auth-link-btn" type="button" id="showLoginFormFromForgot">Back to log in</button></p>
+      </form>
+
+      <!-- LOGGED-IN VIEW -->
+      <div class="auth-account" id="authAccountView" style="display:none;">
+        <div class="auth-account-info">
+          <i class="ti ti-user-circle auth-account-icon" aria-hidden="true"></i>
+          <p class="auth-account-name" id="accountName"></p>
+          <p class="auth-account-email" id="accountEmail"></p>
+        </div>
+        <button class="auth-submit-btn auth-logout-btn" id="logoutBtn">Log out</button>
+      </div>
+
+    </div>
+  </aside>
+
   <!-- SEARCH RESULTS DROPDOWN -->
   <div class="search-results" id="searchResults"></div>
+
+  <!-- QUICK VIEW MODAL -->
+  <div class="qv-overlay" id="qvOverlay"></div>
+  <div class="qv-modal" id="qvModal" role="dialog" aria-modal="true" aria-label="Product details">
+    <button class="qv-close" id="qvClose" aria-label="Close product details"><i class="ti ti-x"></i></button>
+    <div class="qv-body">
+      <div class="qv-img" id="qvImg"></div>
+      <div class="qv-info">
+        <span class="prod-brand">Medicube</span>
+        <h2 class="qv-name" id="qvName"></h2>
+        <div class="prod-stars" id="qvStars"></div>
+        <div class="qv-price" id="qvPrice"></div>
+        <p class="qv-desc" id="qvDesc"></p>
+        <div class="qv-qty">
+          <span>Quantity</span>
+          <div class="qty-wrap">
+            <button class="qty-btn" id="qvDec" aria-label="Decrease quantity">−</button>
+            <span class="qty-num" id="qvQtyNum">1</span>
+            <button class="qty-btn" id="qvInc" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+        <div class="qv-actions">
+          <button class="qv-add-cart" id="qvAddCart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i> Add to cart</button>
+          <button class="wish-btn qv-wish" id="qvWish" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- HERO SLIDER -->
   <section class="hero" id="hero" aria-label="Featured products">
@@ -257,7 +369,7 @@
         </div>
       </div>
 
-      <div class="product-card" data-name="Medicube Red Erasing Serum" data-price="38">
+      <div class="product-card" data-name="Red Erasing Serum" data-price="38">
         <div class="product-img pi2">
           <img src="Red serum.jpg" alt="Red Erasing Serum">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
@@ -276,7 +388,7 @@
         </div>
       </div>
 
-      <div class="product-card" data-name="Medicube Triple Collagen Capsule Cream" data-price="52">
+      <div class="product-card" data-name="Triple Collagen Cream" data-price="30">
         <div class="product-img pi3">
           <img src="Collagen cream.jpg" alt="Collagen Night Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
@@ -284,7 +396,7 @@
         </div>
         <div class="product-info">
           <span class="prod-brand">Medicube</span>
-          <h3 class="prod-name">Triple Collagen Capsule Cream</h3>
+          <h3 class="prod-name">Triple Collagen Cream</h3>
           <div class="prod-stars">
             <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-half-filled" aria-hidden="true"></i>
             <span>4.7 (512)</span>
@@ -296,14 +408,14 @@
         </div>
       </div>
 
-      <div class="product-card" data-name="Zero Pore Pads" data-price="28">
+      <div class="product-card" data-name="Kojic Acid Turmeric Gold Jelly Gel Mask" data-price="28">
         <div class="product-img pi4">
-          <img src="Zero padss.jpg" alt="Zero Pore Pads">
+          <img src="Zero padss.jpg" alt="Kojic Acid Turmeric Gold Jelly Gel Mask">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         </div>
         <div class="product-info">
           <span class="prod-brand">Medicube</span>
-          <h3 class="prod-name">Zero Pore Pads</h3>
+          <h3 class="prod-name">Kojic Acid Turmeric Gold Jelly Gel Mask</h3>
           <div class="prod-stars">
             <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
             <span>4.9 (2.1k)</span>
@@ -315,7 +427,7 @@
         </div>
       </div>
 
-      <div class="product-card" data-name="PDRN Pink Niacinamide Whip Cleanser" data-price="24">
+      <div class="product-card" data-name="PDRN Pink Niacinamide Whip Cleanser" data-price="15">
         <div class="product-img pi5">
           <img src="Collagen cleansing.jpg" alt="Deep Cleanser Foam">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
@@ -328,13 +440,13 @@
             <span>4.6 (390)</span>
           </div>
           <div class="prod-bottom">
-            <span class="prod-price">$24</span>
+            <span class="prod-price">$15</span>
             <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i></button>
           </div>
         </div>
       </div>
 
-      <div class="product-card" data-name="Deep Vita C Daily Quick Masks" data-price="44">
+      <div class="product-card" data-name="Deep Vita C Daily Quick Mask (30 Sheets)" data-price="21">
         <div class="product-img pi6">
           <img src="Mask.jpg" alt="Collagen Jelly Cream">
           <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
@@ -342,13 +454,13 @@
         </div>
         <div class="product-info">
           <span class="prod-brand">Medicube</span>
-          <h3 class="prod-name">Deep Vita C Daily Quick Masks</h3>
+          <h3 class="prod-name">Deep Vita C Daily Quick Mask (30 Sheets)</h3>
           <div class="prod-stars">
             <i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i><i class="ti ti-star-filled" aria-hidden="true"></i>
             <span>4.8 (748)</span>
           </div>
           <div class="prod-bottom">
-            <span class="prod-price">$44 <s class="prod-old">$58</s></span>
+            <span class="prod-price">$21 <s class="prod-old">$36</s></span>
             <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i></button>
           </div>
         </div>
@@ -393,7 +505,7 @@
             </div>
           </div>
         </div>
-        <div class="na-card" data-name="Deep Vita C Capsule Cream" data-price="36">
+        <div class="na-card" data-name="Deep Vita C Capsule Cream" data-price="26">
           <div class="na-img nai2">
             <img src="vita C cream.jpg" alt="Aqua Tone Essence">
             <span class="na-tag">Trending</span>
@@ -402,18 +514,18 @@
             <h3 class="na-name">Deep Vita C Capsule Cream</h3>
             <p class="na-desc">Viral from her nighttime reel — handles surface level issues like dark spots, acne scars, and uneven tone.</p>
             <div class="na-bottom">
-              <span class="na-price">$36</span>
+              <span class="na-price">$26</span>
               <button class="add-btn" aria-label="Add to cart"><i class="ti ti-plus" aria-hidden="true"></i></button>
             </div>
           </div>
         </div>
-        <div class="na-card" data-name="Medicube PDRN Pink Peptide Serum" data-price="48">
+        <div class="na-card" data-name="PDRN Pink Peptide Serum" data-price="48">
           <div class="na-img nai3">
             <img src="collagen shot pink.jpg" alt="Barrier Repair Cream">
             <span class="na-tag">New</span>
           </div>
           <div class="na-info">
-            <h3 class="na-name">Medicube PDRN Pink Peptide Serum</h3>
+            <h3 class="na-name">PDRN Pink Peptide Serum</h3>
             <p class="na-desc">works on the skin barrier and cellular renewal to give you that coveted "glass skin" finish.</p>
             <div class="na-bottom">
               <span class="na-price">$48</span>
