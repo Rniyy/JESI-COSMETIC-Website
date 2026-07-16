@@ -2,7 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const pool    = require('../db/pool');
 
-const SELECT_CART = `
+const SELECT_CART_BY_SESSION = `
   SELECT
     p.id            AS product_id,
     p.name,
@@ -16,8 +16,29 @@ const SELECT_CART = `
   ORDER BY c.created_at ASC
 `;
 
+const SELECT_CART_BY_USER = `
+  SELECT
+    p.id            AS product_id,
+    p.name,
+    p.price,
+    p.image_url,
+    p.image_class,
+    c.quantity
+  FROM cart_items c
+  JOIN products p ON p.id = c.product_id
+  WHERE c.user_id = ?
+  ORDER BY c.created_at ASC
+`;
+
+// Logged-in users are scoped by user_id; guests fall back to the session cookie.
+function cartOwnerClause(req) {
+  if (req.user) return { sql: SELECT_CART_BY_USER, param: req.user.id };
+  return { sql: SELECT_CART_BY_SESSION, param: req.sessionId };
+}
+
 async function respondWithCart(req, res) {
-  const [items] = await pool.query(SELECT_CART, [req.sessionId]);
+  const { sql, param } = cartOwnerClause(req);
+  const [items] = await pool.query(sql, [param]);
   const subtotal   = items.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0);
   const item_count = items.reduce((sum, i) => sum + i.quantity, 0);
   res.json({ success: true, data: items, item_count, subtotal: subtotal.toFixed(2) });
@@ -53,12 +74,21 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    await pool.query(
-      `INSERT INTO cart_items (session_id, product_id, quantity)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)`,
-      [req.sessionId, product_id, qty]
-    );
+    if (req.user) {
+      await pool.query(
+        `INSERT INTO cart_items (session_id, user_id, product_id, quantity)
+         VALUES (NULL, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)`,
+        [req.user.id, product_id, qty]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO cart_items (session_id, product_id, quantity)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)`,
+        [req.sessionId, product_id, qty]
+      );
+    }
 
     await respondWithCart(req, res);
   } catch (err) {
@@ -80,10 +110,15 @@ router.patch('/:productId', async (req, res) => {
       return res.status(400).json({ success: false, message: 'quantity must be a positive integer' });
     }
 
-    const [result] = await pool.query(
-      'UPDATE cart_items SET quantity = ? WHERE session_id = ? AND product_id = ?',
-      [qty, req.sessionId, req.params.productId]
-    );
+    const [result] = req.user
+      ? await pool.query(
+          'UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_id = ?',
+          [qty, req.user.id, req.params.productId]
+        )
+      : await pool.query(
+          'UPDATE cart_items SET quantity = ? WHERE session_id = ? AND product_id = ?',
+          [qty, req.sessionId, req.params.productId]
+        );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Item not in cart' });
@@ -101,10 +136,17 @@ router.patch('/:productId', async (req, res) => {
  */
 router.delete('/:productId', async (req, res) => {
   try {
-    await pool.query(
-      'DELETE FROM cart_items WHERE session_id = ? AND product_id = ?',
-      [req.sessionId, req.params.productId]
-    );
+    if (req.user) {
+      await pool.query(
+        'DELETE FROM cart_items WHERE user_id = ? AND product_id = ?',
+        [req.user.id, req.params.productId]
+      );
+    } else {
+      await pool.query(
+        'DELETE FROM cart_items WHERE session_id = ? AND product_id = ?',
+        [req.sessionId, req.params.productId]
+      );
+    }
     await respondWithCart(req, res);
   } catch (err) {
     console.error('DELETE /cart/:productId error:', err);

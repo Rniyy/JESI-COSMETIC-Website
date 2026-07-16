@@ -173,6 +173,12 @@ function initCart() {
   document.querySelectorAll('.add-cart, .add-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
+
+      if (!window.currentUser) {
+        document.dispatchEvent(new CustomEvent('auth:required'));
+        return;
+      }
+
       const card = btn.closest('[data-name]');
       if (!card) return;
 
@@ -220,6 +226,207 @@ function initCart() {
 
   // Refresh when another part of the page (e.g. Quick View) adds an item
   document.addEventListener('cart:changed', loadCart);
+}
+
+/* ─────────────────────────────────────────────────────────
+   ACCOUNT — login / register / logout slide-out panel
+───────────────────────────────────────────────────────── */
+function initAuth() {
+  const accountBtn   = document.getElementById('accountBtn');
+  const authPanel    = document.getElementById('authPanel');
+  const authOverlay  = document.getElementById('authOverlay');
+  const authClose    = document.getElementById('authClose');
+  const authTitle    = document.getElementById('authPanelTitle');
+  if (!accountBtn || !authPanel) return;
+
+  const loginForm    = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
+  const forgotForm   = document.getElementById('forgotForm');
+  const accountView  = document.getElementById('authAccountView');
+
+  const loginError    = document.getElementById('loginError');
+  const registerError = document.getElementById('registerError');
+  const forgotSuccess  = document.getElementById('forgotSuccess');
+
+  const accountName  = document.getElementById('accountName');
+  const accountEmail = document.getElementById('accountEmail');
+  const logoutBtn    = document.getElementById('logoutBtn');
+
+  let currentUser = null;
+  function setCurrentUser(user) {
+    currentUser = user;
+    window.currentUser = user; // exposed so initCart/initQuickView can gate add-to-cart
+  }
+
+  // Other code (e.g. add-to-cart when logged out) can request the panel open
+  document.addEventListener('auth:required', () => {
+    openAuth();
+    showToast('Please log in to add items to your cart', 'error');
+  });
+
+  function openAuth() {
+    authPanel.classList.add('open');
+    authOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    refreshCurrentUser();
+  }
+  function closeAuth() {
+    authPanel.classList.remove('open');
+    authOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  accountBtn.addEventListener('click', openAuth);
+  authClose.addEventListener('click', closeAuth);
+  authOverlay.addEventListener('click', closeAuth);
+
+  function showView(view) {
+    [loginForm, registerForm, forgotForm, accountView].forEach(el => el.style.display = 'none');
+    loginError.style.display    = 'none';
+    registerError.style.display = 'none';
+    forgotSuccess.style.display = 'none';
+
+    const titles = {
+      login:    'Log in',
+      register: 'Create account',
+      forgot:   'Reset password',
+      account:  'Your account',
+    };
+    authTitle.textContent = titles[view];
+
+    if (view === 'login')    loginForm.style.display    = 'flex';
+    if (view === 'register') registerForm.style.display = 'flex';
+    if (view === 'forgot')   forgotForm.style.display   = 'flex';
+    if (view === 'account')  accountView.style.display  = 'flex';
+  }
+
+  document.getElementById('showRegisterForm').addEventListener('click', () => showView('register'));
+  document.getElementById('showLoginFormFromRegister').addEventListener('click', () => showView('login'));
+  document.getElementById('showForgotForm').addEventListener('click', () => showView('forgot'));
+  document.getElementById('showLoginFormFromForgot').addEventListener('click', () => showView('login'));
+
+  // Check /me on load to decide which view to show, and to update the icon
+  async function refreshCurrentUser() {
+    try {
+      const res  = await fetch(`${API}/auth/me`, { credentials: 'include' });
+      const json = await res.json();
+      setCurrentUser(json.success ? json.data : null);
+
+      if (currentUser) {
+        accountName.textContent  = currentUser.name;
+        accountEmail.textContent = currentUser.email;
+        showView('account');
+      } else {
+        showView('login');
+      }
+    } catch (err) {
+      console.error('Auth check error:', err);
+      showView('login');
+    }
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.style.display = 'none';
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+      const res  = await fetch(`${API}/auth/login`, {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ email, password }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        loginError.textContent   = json.message || 'Could not log in';
+        loginError.style.display = 'block';
+        return;
+      }
+      setCurrentUser(json.data);
+      accountName.textContent  = currentUser.name;
+      accountEmail.textContent = currentUser.email;
+      showView('account');
+      showToast(`Welcome back, ${currentUser.name}`);
+      // Cart/wishlist may have merged guest data in — refresh both panels/badges
+      document.dispatchEvent(new CustomEvent('cart:changed'));
+      document.dispatchEvent(new CustomEvent('wishlist:changed'));
+    } catch (err) {
+      loginError.textContent   = 'Something went wrong — try again';
+      loginError.style.display = 'block';
+      console.error(err);
+    }
+  });
+
+  registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    registerError.style.display = 'none';
+    const name     = document.getElementById('registerName').value.trim();
+    const email    = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+
+    try {
+      const res  = await fetch(`${API}/auth/register`, {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ name, email, password }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        registerError.textContent   = json.message || 'Could not create account';
+        registerError.style.display = 'block';
+        return;
+      }
+      currentUser = json.data; window.currentUser = json.data;
+      accountName.textContent  = currentUser.name;
+      accountEmail.textContent = currentUser.email;
+      showView('account');
+      showToast(`Welcome, ${currentUser.name}`);
+      document.dispatchEvent(new CustomEvent('cart:changed'));
+      document.dispatchEvent(new CustomEvent('wishlist:changed'));
+    } catch (err) {
+      registerError.textContent   = 'Something went wrong — try again';
+      registerError.style.display = 'block';
+      console.error(err);
+    }
+  });
+
+  forgotForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('forgotEmail').value.trim();
+
+    try {
+      const res  = await fetch(`${API}/auth/forgot-password`, {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ email }),
+      });
+      const json = await res.json();
+      forgotSuccess.textContent   = json.message || 'If that email is registered, a reset link has been generated.';
+      forgotSuccess.style.display = 'block';
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    try {
+      await fetch(`${API}/auth/logout`, { method: 'POST', credentials: 'include' });
+      currentUser = null; window.currentUser = null;
+      showToast('Logged out');
+      showView('login');
+      // Switch back to guest-scoped cart/wishlist views
+      document.dispatchEvent(new CustomEvent('cart:changed'));
+      document.dispatchEvent(new CustomEvent('wishlist:changed'));
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  // Check login state quietly on page load (doesn't open the panel)
+  refreshCurrentUser();
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -368,6 +575,7 @@ function initWishlist() {
   });
 
   updateWishlistBadge();
+  document.addEventListener('wishlist:changed', loadWishlist);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -448,6 +656,14 @@ function initSearch() {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { results.classList.remove('open'); input.blur(); }
   });
+
+  // Support linking straight into a search result, e.g. shop.html?q=Red%20Erasing%20Serum
+  const params = new URLSearchParams(window.location.search);
+  const requestedQ = params.get('q');
+  if (requestedQ) {
+    input.value = requestedQ;
+    filterPageCards(requestedQ);
+  }
 }
 
 // Highlight matching text in search results
@@ -606,6 +822,10 @@ function initQuickView() {
   qvInc.addEventListener('click', () => { qty = qty + 1; qvQtyNum.textContent = qty; });
 
   qvAddCart.addEventListener('click', async () => {
+    if (!window.currentUser) {
+      document.dispatchEvent(new CustomEvent('auth:required'));
+      return;
+    }
     if (!activeCard) return;
     const productName = activeCard.dataset.name || activeCard.querySelector('.prod-name')?.textContent.trim();
     if (!productName) return;
@@ -674,6 +894,7 @@ function showToast(msg, type = 'success') {
 ───────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initSlider();
+  initAuth();
   initCart();
   initWishlist();
   initSearch();

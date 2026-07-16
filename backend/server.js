@@ -3,10 +3,12 @@ const express      = require('express');
 const cors         = require('cors');
 const cookieParser = require('cookie-parser');
 
-const { ensureSession } = require('./middleware/session');
+const { ensureSession }  = require('./middleware/session');
+const { attachUser, requireAuth } = require('./middleware/authMiddleware');
 const productsRoutes    = require('./routes/products');
 const cartRoutes         = require('./routes/cart');
 const wishlistRoutes     = require('./routes/wishlist');
+const authRoutes         = require('./routes/auth');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -30,9 +32,11 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 app.use(ensureSession);
+app.use(attachUser);
 
+app.use('/api/auth',     authRoutes);
 app.use('/api/products', productsRoutes);
-app.use('/api/cart',     cartRoutes);
+app.use('/api/cart',     requireAuth, cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'ok' }));

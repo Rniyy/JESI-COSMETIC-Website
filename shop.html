@@ -6,6 +6,7 @@
   <title>Shop All — JESI-COSMETIC</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
 
@@ -26,6 +27,9 @@
           <i class="ti ti-search" aria-hidden="true"></i>
           <input type="text" id="searchInput" placeholder="Search Medicube..." aria-label="Search products" autocomplete="off" />
         </div>
+        <button class="icon-btn" id="accountBtn" aria-label="Account">
+          <i class="ti ti-user"></i>
+        </button>
         <button class="icon-btn" id="wishlistBtn" aria-label="Wishlist">
           <i class="ti ti-heart"></i>
           <span class="badge" id="wishlistBadge" style="display:none;">0</span>
@@ -74,6 +78,70 @@
         <p>Your wishlist is empty</p>
         <span>Tap the heart on any product to save it here.</span>
       </div>
+    </div>
+  </aside>
+
+  <!-- ACCOUNT / AUTH PANEL -->
+  <div class="cart-overlay" id="authOverlay"></div>
+  <aside class="cart-panel" id="authPanel" aria-label="Account">
+    <div class="cart-panel-head">
+      <h2 id="authPanelTitle">Log in</h2>
+      <button class="cart-close" id="authClose" aria-label="Close account panel"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="auth-body" id="authBody">
+
+      <!-- LOGIN VIEW -->
+      <form class="auth-form" id="loginForm">
+        <p class="auth-error" id="loginError" style="display:none;"></p>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="loginEmail" required autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input class="auth-input" type="password" id="loginPassword" required autocomplete="current-password" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Log in</button>
+        <button class="auth-link-btn" type="button" id="showForgotForm">Forgot password?</button>
+        <p class="auth-switch">No account? <button class="auth-link-btn" type="button" id="showRegisterForm">Sign up</button></p>
+      </form>
+
+      <!-- REGISTER VIEW -->
+      <form class="auth-form" id="registerForm" style="display:none;">
+        <p class="auth-error" id="registerError" style="display:none;"></p>
+        <label class="auth-label">Name
+          <input class="auth-input" type="text" id="registerName" required autocomplete="name" />
+        </label>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="registerEmail" required autocomplete="email" />
+        </label>
+        <label class="auth-label">Password
+          <input class="auth-input" type="password" id="registerPassword" required minlength="8" autocomplete="new-password" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Create account</button>
+        <p class="auth-switch">Already have an account? <button class="auth-link-btn" type="button" id="showLoginFormFromRegister">Log in</button></p>
+      </form>
+
+      <!-- FORGOT PASSWORD VIEW -->
+      <form class="auth-form" id="forgotForm" style="display:none;">
+        <p class="auth-note">Enter your email and we'll generate a reset link (check the server console for now — email sending isn't wired up yet).</p>
+        <p class="auth-success" id="forgotSuccess" style="display:none;"></p>
+        <label class="auth-label">Email
+          <input class="auth-input" type="email" id="forgotEmail" required autocomplete="email" />
+        </label>
+        <button class="auth-submit-btn" type="submit">Send reset link</button>
+        <p class="auth-switch"><button class="auth-link-btn" type="button" id="showLoginFormFromForgot">Back to log in</button></p>
+      </form>
+
+      <!-- LOGGED-IN VIEW -->
+      <div class="auth-account" id="authAccountView" style="display:none;">
+        <div class="auth-account-info">
+          <i class="ti ti-user-circle auth-account-icon" aria-hidden="true"></i>
+          <p class="auth-account-name" id="accountName"></p>
+          <p class="auth-account-email" id="accountEmail"></p>
+        </div>
+        <button class="auth-submit-btn auth-logout-btn" id="logoutBtn">Log out</button>
+      </div>
+
     </div>
   </aside>
 
