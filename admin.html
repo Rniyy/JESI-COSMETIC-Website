@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — JESI-COSMETIC</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <div class="admin-brand">JESI-COSMETIC <span>Admin</span></div>
+      <nav class="admin-nav">
+        <button class="admin-nav-btn active" data-view="products">Products</button>
+        <button class="admin-nav-btn" data-view="users">Users</button>
+      </nav>
+      <div class="admin-sidebar-foot">
+        <a href="shop.html" class="admin-back-link">&larr; Back to shop</a>
+        <button class="admin-logout-btn" id="adminLogoutBtn">Log out</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="admin-main">
+
+      <!-- Gate shown until we've confirmed the visitor is an admin -->
+      <div class="admin-gate" id="adminGate">
+        <p>Checking access…</p>
+      </div>
+
+      <div class="admin-content" id="adminContent" style="display:none;">
+
+        <!-- PRODUCTS VIEW -->
+        <section class="admin-view" id="view-products">
+          <div class="admin-view-head">
+            <h1>Products</h1>
+            <button class="admin-primary-btn" id="addProductBtn">+ Add product</button>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Badge</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- USERS VIEW -->
+        <section class="admin-view" id="view-users" style="display:none;">
+          <div class="admin-view-head">
+            <h1>Users</h1>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Joined</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- PRODUCT ADD/EDIT MODAL -->
+  <div class="admin-modal-overlay" id="productModalOverlay">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2 id="productModalTitle">Add product</h2>
+        <button class="admin-modal-close" id="productModalClose">&times;</button>
+      </div>
+      <form class="admin-modal-form" id="productForm">
+        <input type="hidden" id="productId" />
+        <div class="admin-form-row">
+          <label>Name
+            <input type="text" id="productName" required />
+          </label>
+          <label>Category
+            <select id="productCategory" required>
+              <option value="serums">Serums</option>
+              <option value="moisturizers">Moisturizers</option>
+              <option value="devices">Devices</option>
+              <option value="cleansers">Cleansers</option>
+              <option value="pads">Pads</option>
+              <option value="sets">Sets</option>
+            </select>
+          </label>
+        </div>
+        <div class="admin-form-row">
+          <label>Brand
+            <input type="text" id="productBrand" value="Medicube" required />
+          </label>
+        </div>
+        <div class="admin-form-row">
+          <label>Price ($)
+            <input type="number" id="productPrice" step="0.01" min="0" required />
+          </label>
+          <label>Old price ($, optional)
+            <input type="number" id="productOldPrice" step="0.01" min="0" />
+          </label>
+        </div>
+        <div class="admin-form-row">
+          <label>Image URL
+            <input type="text" id="productImageUrl" placeholder="e.g. Booster.jpg" />
+          </label>
+          <label>Image swatch class
+            <select id="productImageClass">
+              <option value="pi1">pi1</option>
+              <option value="pi2">pi2</option>
+              <option value="pi3">pi3</option>
+              <option value="pi4">pi4</option>
+              <option value="pi5">pi5</option>
+              <option value="pi6">pi6</option>
+            </select>
+          </label>
+        </div>
+        <div class="admin-form-row">
+          <label>Rating (0–5)
+            <input type="number" id="productRating" step="0.1" min="0" max="5" />
+          </label>
+          <label>Review count
+            <input type="text" id="productReviewCount" placeholder="e.g. 1.2k" />
+          </label>
+        </div>
+        <div class="admin-form-row">
+          <label>Badge
+            <select id="productBadge">
+              <option value="">None</option>
+              <option value="Best">Best</option>
+              <option value="New">New</option>
+              <option value="Sale">Sale</option>
+            </select>
+          </label>
+          <label class="admin-checkbox-label">
+            <input type="checkbox" id="productInStock" checked />
+            In stock
+          </label>
+        </div>
+        <label>Description
+          <textarea id="productDescription" rows="3"></textarea>
+        </label>
+        <p class="admin-form-error" id="productFormError" style="display:none;"></p>
+        <div class="admin-modal-actions">
+          <button type="button" class="admin-secondary-btn" id="productCancelBtn">Cancel</button>
+          <button type="submit" class="admin-primary-btn">Save product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="adminDashboard.js"></script>
+</body>
+</html>

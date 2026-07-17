@@ -251,6 +251,13 @@ function initAuth() {
   const accountName  = document.getElementById('accountName');
   const accountEmail = document.getElementById('accountEmail');
   const logoutBtn    = document.getElementById('logoutBtn');
+  const adminDashboardLink = document.getElementById('adminDashboardLink');
+
+  function renderAccountInfo(user) {
+    accountName.textContent  = user.name;
+    accountEmail.textContent = user.email;
+    adminDashboardLink.style.display = user.role === 'admin' ? 'block' : 'none';
+  }
 
   let currentUser = null;
   function setCurrentUser(user) {
@@ -279,30 +286,116 @@ function initAuth() {
   authClose.addEventListener('click', closeAuth);
   authOverlay.addEventListener('click', closeAuth);
 
+  const editAccountView = document.getElementById('editAccountView');
+
   function showView(view) {
-    [loginForm, registerForm, forgotForm, accountView].forEach(el => el.style.display = 'none');
+    [loginForm, registerForm, forgotForm, accountView, editAccountView].forEach(el => el.style.display = 'none');
     loginError.style.display    = 'none';
     registerError.style.display = 'none';
     forgotSuccess.style.display = 'none';
 
     const titles = {
-      login:    'Log in',
-      register: 'Create account',
-      forgot:   'Reset password',
-      account:  'Your account',
+      login:       'Log in',
+      register:    'Create account',
+      forgot:      'Reset password',
+      account:     'Your account',
+      editAccount: 'Edit account',
     };
     authTitle.textContent = titles[view];
 
-    if (view === 'login')    loginForm.style.display    = 'flex';
-    if (view === 'register') registerForm.style.display = 'flex';
-    if (view === 'forgot')   forgotForm.style.display   = 'flex';
-    if (view === 'account')  accountView.style.display  = 'flex';
+    if (view === 'login')       loginForm.style.display       = 'flex';
+    if (view === 'register')    registerForm.style.display    = 'flex';
+    if (view === 'forgot')      forgotForm.style.display      = 'flex';
+    if (view === 'account')     accountView.style.display     = 'flex';
+    if (view === 'editAccount') editAccountView.style.display = 'flex';
   }
 
   document.getElementById('showRegisterForm').addEventListener('click', () => showView('register'));
   document.getElementById('showLoginFormFromRegister').addEventListener('click', () => showView('login'));
   document.getElementById('showForgotForm').addEventListener('click', () => showView('forgot'));
   document.getElementById('showLoginFormFromForgot').addEventListener('click', () => showView('login'));
+
+  document.getElementById('showEditAccountForm').addEventListener('click', () => {
+    if (!currentUser) return;
+    document.getElementById('editName').value  = currentUser.name;
+    document.getElementById('editEmail').value = currentUser.email;
+    document.getElementById('editProfileError').style.display   = 'none';
+    document.getElementById('editProfileSuccess').style.display = 'none';
+    document.getElementById('editPasswordError').style.display   = 'none';
+    document.getElementById('editPasswordSuccess').style.display = 'none';
+    document.getElementById('editPasswordForm').reset();
+    showView('editAccount');
+  });
+  document.getElementById('backToAccountView').addEventListener('click', () => showView('account'));
+
+  document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl   = document.getElementById('editProfileError');
+    const successEl = document.getElementById('editProfileSuccess');
+    errorEl.style.display   = 'none';
+    successEl.style.display = 'none';
+
+    const name  = document.getElementById('editName').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+
+    try {
+      const res  = await fetch(`${API}/auth/me`, {
+        method:      'PATCH',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ name, email }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        errorEl.textContent   = json.message || 'Could not update profile';
+        errorEl.style.display = 'block';
+        return;
+      }
+      setCurrentUser(json.data);
+      renderAccountInfo(currentUser);
+      successEl.textContent   = 'Profile updated';
+      successEl.style.display = 'block';
+      showToast('Profile updated');
+    } catch (err) {
+      errorEl.textContent   = 'Something went wrong — try again';
+      errorEl.style.display = 'block';
+      console.error(err);
+    }
+  });
+
+  document.getElementById('editPasswordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl   = document.getElementById('editPasswordError');
+    const successEl = document.getElementById('editPasswordSuccess');
+    errorEl.style.display   = 'none';
+    successEl.style.display = 'none';
+
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword     = document.getElementById('newPassword').value;
+
+    try {
+      const res  = await fetch(`${API}/auth/password`, {
+        method:      'PATCH',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ currentPassword, newPassword }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        errorEl.textContent   = json.message || 'Could not update password';
+        errorEl.style.display = 'block';
+        return;
+      }
+      successEl.textContent   = 'Password updated';
+      successEl.style.display = 'block';
+      document.getElementById('editPasswordForm').reset();
+      showToast('Password updated');
+    } catch (err) {
+      errorEl.textContent   = 'Something went wrong — try again';
+      errorEl.style.display = 'block';
+      console.error(err);
+    }
+  });
 
   // Check /me on load to decide which view to show, and to update the icon
   async function refreshCurrentUser() {
@@ -312,8 +405,7 @@ function initAuth() {
       setCurrentUser(json.success ? json.data : null);
 
       if (currentUser) {
-        accountName.textContent  = currentUser.name;
-        accountEmail.textContent = currentUser.email;
+        renderAccountInfo(currentUser);
         showView('account');
       } else {
         showView('login');
@@ -344,8 +436,7 @@ function initAuth() {
         return;
       }
       setCurrentUser(json.data);
-      accountName.textContent  = currentUser.name;
-      accountEmail.textContent = currentUser.email;
+      renderAccountInfo(currentUser);
       showView('account');
       showToast(`Welcome back, ${currentUser.name}`);
       // Cart/wishlist may have merged guest data in — refresh both panels/badges
@@ -379,8 +470,7 @@ function initAuth() {
         return;
       }
       currentUser = json.data; window.currentUser = json.data;
-      accountName.textContent  = currentUser.name;
-      accountEmail.textContent = currentUser.email;
+      renderAccountInfo(currentUser);
       showView('account');
       showToast(`Welcome, ${currentUser.name}`);
       document.dispatchEvent(new CustomEvent('cart:changed'));

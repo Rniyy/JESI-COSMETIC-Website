@@ -1,4 +1,5 @@
-const jwt = require('jsonwebtoken');
+const jwt  = require('jsonwebtoken');
+const pool = require('../db/pool');
 
 const TOKEN_COOKIE = 'jesi_token';
 const JWT_SECRET    = process.env.JWT_SECRET;
@@ -12,15 +13,29 @@ if (!JWT_SECRET) {
  * Runs on every request (after ensureSession). Does NOT block unauthenticated
  * requests — it just populates req.user if a valid login cookie is present,
  * so routes can check `if (req.user)` themselves.
+ *
+ * The JWT only proves WHO is asking (their id) — it does NOT carry the role.
+ * We look the role up fresh from the database every request instead, so that
+ * promoting/demoting a user (e.g. via the admin dashboard) takes effect
+ * immediately, without requiring that person to log out and back in.
  */
-function attachUser(req, res, next) {
+async function attachUser(req, res, next) {
   const token = req.cookies[TOKEN_COOKIE];
   req.user = null;
 
   if (token) {
     try {
       const payload = jwt.verify(token, JWT_SECRET);
-      req.user = { id: payload.id, email: payload.email, role: payload.role };
+      const [[user]] = await pool.query(
+        'SELECT id, name, email, role FROM users WHERE id = ?',
+        [payload.id]
+      );
+      if (user) {
+        req.user = user; // always the current DB role, never a stale token value
+      } else {
+        // User was deleted after the token was issued
+        res.clearCookie(TOKEN_COOKIE);
+      }
     } catch (err) {
       // Invalid/expired token — treat as logged out, clear the bad cookie.
       res.clearCookie(TOKEN_COOKIE);

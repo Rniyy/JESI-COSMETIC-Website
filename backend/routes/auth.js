@@ -181,4 +181,60 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+/**
+ * PATCH /api/auth/me  { name, email }
+ * Updates the logged-in user's own name/email.
+ */
+router.patch('/me', requireAuth, async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ success: false, message: 'name and email are required' });
+    }
+
+    const [[existing]] = await pool.query(
+      'SELECT id FROM users WHERE email = ? AND id != ?',
+      [email, req.user.id]
+    );
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Another account already uses that email' });
+    }
+
+    await pool.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, req.user.id]);
+    res.json({ success: true, data: { id: req.user.id, name, email, role: req.user.role } });
+  } catch (err) {
+    console.error('PATCH /auth/me error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update profile' });
+  }
+});
+
+/**
+ * PATCH /api/auth/password  { currentPassword, newPassword }
+ * Requires the current password as confirmation before changing it.
+ */
+router.patch('/password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'currentPassword and newPassword are required' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
+    }
+
+    const [[user]] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+    const match = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!match) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 12);
+    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, req.user.id]);
+    res.json({ success: true, message: 'Password updated' });
+  } catch (err) {
+    console.error('PATCH /auth/password error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update password' });
+  }
+});
+
 module.exports = router;

@@ -4,7 +4,8 @@ const cors         = require('cors');
 const cookieParser = require('cookie-parser');
 
 const { ensureSession }  = require('./middleware/session');
-const { attachUser, requireAuth } = require('./middleware/authMiddleware');
+const { attachUser, requireAuth, requireAdmin } = require('./middleware/authMiddleware');
+const adminRoutes        = require('./routes/admin');
 const productsRoutes    = require('./routes/products');
 const cartRoutes         = require('./routes/cart');
 const wishlistRoutes     = require('./routes/wishlist');
@@ -35,6 +36,7 @@ app.use(ensureSession);
 app.use(attachUser);
 
 app.use('/api/auth',     authRoutes);
+app.use('/api/admin',    requireAdmin, adminRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/cart',     requireAuth, cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
