@@ -62,7 +62,7 @@
         <span>Subtotal</span>
         <span id="cartSubtotal">$0</span>
       </div>
-      <a class="cart-checkout-btn" href="#">Checkout <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+      <button class="cart-checkout-btn" id="checkoutBtn" type="button">Checkout <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
     </div>
   </aside>
 
@@ -140,11 +140,110 @@
           <p class="auth-account-name" id="accountName"></p>
           <p class="auth-account-email" id="accountEmail"></p>
         </div>
+        <a class="auth-submit-btn" id="adminDashboardLink" href="admin.html" style="display:none; text-decoration:none; text-align:center;">Admin Dashboard</a>
+        <button class="auth-link-btn" id="showOrdersView" style="align-self:center;">My orders</button>
+        <button class="auth-link-btn" id="showEditAccountForm" style="align-self:center;">Edit email / password</button>
         <button class="auth-submit-btn auth-logout-btn" id="logoutBtn">Log out</button>
+      </div>
+
+      <!-- EDIT ACCOUNT VIEW -->
+      <div class="auth-account" id="editAccountView" style="display:none;">
+        <form class="auth-form" id="editProfileForm">
+          <p class="auth-error" id="editProfileError" style="display:none;"></p>
+          <p class="auth-success" id="editProfileSuccess" style="display:none;"></p>
+          <label class="auth-label">Name
+            <input class="auth-input" type="text" id="editName" required />
+          </label>
+          <label class="auth-label">Email
+            <input class="auth-input" type="email" id="editEmail" required />
+          </label>
+          <button class="auth-submit-btn" type="submit">Save profile</button>
+        </form>
+
+        <form class="auth-form" id="editPasswordForm" style="margin-top:20px;">
+          <p class="auth-error" id="editPasswordError" style="display:none;"></p>
+          <p class="auth-success" id="editPasswordSuccess" style="display:none;"></p>
+          <label class="auth-label">Current password
+            <input class="auth-input" type="password" id="currentPassword" required autocomplete="current-password" />
+          </label>
+          <label class="auth-label">New password
+            <input class="auth-input" type="password" id="newPassword" required minlength="8" autocomplete="new-password" />
+          </label>
+          <button class="auth-submit-btn" type="submit">Change password</button>
+        </form>
+
+        <button class="auth-link-btn" id="backToAccountView" style="align-self:center; margin-top:16px;">&larr; Back to account</button>
+      </div>
+
+      <!-- MY ORDERS VIEW -->
+      <div class="auth-account" id="ordersView" style="display:none;">
+        <div class="orders-list" id="ordersList"></div>
+        <button class="auth-link-btn" id="backToAccountFromOrders" style="align-self:center; margin-top:16px;">&larr; Back to account</button>
       </div>
 
     </div>
   </aside>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="admin-modal-overlay" id="checkoutModalOverlay">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Shipping address</h2>
+        <button class="admin-modal-close" id="checkoutModalClose">&times;</button>
+      </div>
+      <form class="admin-modal-form" id="checkoutForm">
+        <p class="auth-error" id="checkoutError" style="display:none;"></p>
+        <label>Full name
+          <input type="text" id="checkoutFullName" required />
+        </label>
+        <label>Phone (optional)
+          <input type="tel" id="checkoutPhone" />
+        </label>
+        <label>Address line 1
+          <input type="text" id="checkoutLine1" required />
+        </label>
+        <label>Address line 2 (optional)
+          <input type="text" id="checkoutLine2" />
+        </label>
+        <div class="admin-form-row">
+          <label>City
+            <input type="text" id="checkoutCity" required />
+          </label>
+          <label>State/Province (optional)
+            <input type="text" id="checkoutState" />
+          </label>
+        </div>
+        <div class="admin-form-row">
+          <label>Postal code (optional)
+            <input type="text" id="checkoutPostalCode" />
+          </label>
+          <label>Country
+            <input type="text" id="checkoutCountry" value="Cambodia" required />
+          </label>
+        </div>
+        <div class="admin-modal-actions">
+          <button type="button" class="admin-secondary-btn" id="checkoutCancelBtn">Cancel</button>
+          <button type="submit" class="admin-primary-btn">Place order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ORDER CONFIRMATION MODAL -->
+  <div class="admin-modal-overlay" id="orderConfirmOverlay">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Order placed!</h2>
+        <button class="admin-modal-close" id="orderConfirmClose">&times;</button>
+      </div>
+      <div class="admin-modal-form">
+        <p id="orderConfirmText"></p>
+        <div class="admin-modal-actions">
+          <button type="button" class="admin-primary-btn" id="orderConfirmOkBtn">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- SEARCH RESULTS DROPDOWN -->
   <div class="search-results" id="searchResults"></div>
@@ -194,62 +293,10 @@
 
   <!-- PRODUCT GRID -->
   <div class="shop-grid-wrap">
-    <div class="products-grid">
-
-      <div class="product-card" data-category="devices" data-name="Age R Booster Pro" data-price="128">
-        <div class="product-img pi1">
-          <img src="Booster.jpg" alt="Booster">
-          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
-          <span class="prod-badge">Best</span>
-        </div>
-        <div class="product-info">
-          <span class="prod-brand">Medicube</span>
-          <h3 class="prod-name">Age R Booster Pro</h3>
-          <div class="prod-stars"><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><span>4.9 (1.2k)</span></div>
-          <div class="prod-bottom"><span class="prod-price">$128</span><button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus"></i></button></div>
-        </div>
-      </div>
-
-      <div class="product-card" data-category="devices" data-name="AGE-R I Shot" data-price="148">
-        <div class="product-img pi2">
-          <img src="Device R.jpg" alt="Device R">
-          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
-        </div>
-        <div class="product-info">
-          <span class="prod-brand">Medicube</span>
-          <h3 class="prod-name">AGE-R I Shot</h3>
-          <div class="prod-stars"><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-half-filled"></i><span>4.5 (211)</span></div>
-          <div class="prod-bottom"><span class="prod-price">$148</span><button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus"></i></button></div>
-        </div>
-      </div>
-
-      <div class="product-card" data-category="devices" data-name="AGE-R Derma EMS Shot" data-price="125">
-        <div class="product-img pi3">
-          <img src="Device White.jpg" alt="Device White">
-          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
-          <span class="prod-badge">New</span>
-        </div>
-        <div class="product-info">
-          <span class="prod-brand">Medicube</span>
-          <h3 class="prod-name">AGE-R Derma EMS Shot</h3>
-          <div class="prod-stars"><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-half-filled"></i><span>4.6 (148)</span></div>
-          <div class="prod-bottom"><span class="prod-price">$125</span><button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus"></i></button></div>
-        </div>
-      </div>
-
-      <div class="product-card" data-category="devices" data-name="Medicube AGE-R High Focus Shot" data-price="145">
-        <div class="product-img pi4">
-          <img src="device 2.jpg" alt="Device 2">
-          <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
-        </div>
-        <div class="product-info">
-          <span class="prod-brand">Medicube</span>
-          <h3 class="prod-name">Medicube AGE-R High Focus Shot</h3>
-          <div class="prod-stars"><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-half-filled"></i><span>4.4 (96)</span></div>
-          <div class="prod-bottom"><span class="prod-price">$145</span><button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus"></i></button></div>
-        </div>
-      </div>
-
+    <div class="products-grid" data-category-filter="devices">
+      <!-- Cards are rendered dynamically by renderShopProducts() in script.js -->
+      <p class="products-loading">Loading products…</p>
+    
     </div>
   </div>
 

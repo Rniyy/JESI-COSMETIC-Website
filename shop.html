@@ -61,7 +61,7 @@
         <span>Subtotal</span>
         <span id="cartSubtotal">$0</span>
       </div>
-      <a class="cart-checkout-btn" href="#">Checkout <i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+      <button class="cart-checkout-btn" id="checkoutBtn" type="button">Checkout <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
     </div>
   </aside>
 
@@ -140,6 +140,7 @@
           <p class="auth-account-email" id="accountEmail"></p>
         </div>
         <a class="auth-submit-btn" id="adminDashboardLink" href="admin.html" style="display:none; text-decoration:none; text-align:center;">Admin Dashboard</a>
+        <button class="auth-link-btn" id="showOrdersView" style="align-self:center;">My orders</button>
         <button class="auth-link-btn" id="showEditAccountForm" style="align-self:center;">Edit email / password</button>
         <button class="auth-submit-btn auth-logout-btn" id="logoutBtn">Log out</button>
       </div>
@@ -173,8 +174,75 @@
         <button class="auth-link-btn" id="backToAccountView" style="align-self:center; margin-top:16px;">&larr; Back to account</button>
       </div>
 
+      <!-- MY ORDERS VIEW -->
+      <div class="auth-account" id="ordersView" style="display:none;">
+        <div class="orders-list" id="ordersList"></div>
+        <button class="auth-link-btn" id="backToAccountFromOrders" style="align-self:center; margin-top:16px;">&larr; Back to account</button>
+      </div>
+
     </div>
   </aside>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="admin-modal-overlay" id="checkoutModalOverlay">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Shipping address</h2>
+        <button class="admin-modal-close" id="checkoutModalClose">&times;</button>
+      </div>
+      <form class="admin-modal-form" id="checkoutForm">
+        <p class="auth-error" id="checkoutError" style="display:none;"></p>
+        <label>Full name
+          <input type="text" id="checkoutFullName" required />
+        </label>
+        <label>Phone (optional)
+          <input type="tel" id="checkoutPhone" />
+        </label>
+        <label>Address line 1
+          <input type="text" id="checkoutLine1" required />
+        </label>
+        <label>Address line 2 (optional)
+          <input type="text" id="checkoutLine2" />
+        </label>
+        <div class="admin-form-row">
+          <label>City
+            <input type="text" id="checkoutCity" required />
+          </label>
+          <label>State/Province (optional)
+            <input type="text" id="checkoutState" />
+          </label>
+        </div>
+        <div class="admin-form-row">
+          <label>Postal code (optional)
+            <input type="text" id="checkoutPostalCode" />
+          </label>
+          <label>Country
+            <input type="text" id="checkoutCountry" value="Cambodia" required />
+          </label>
+        </div>
+        <div class="admin-modal-actions">
+          <button type="button" class="admin-secondary-btn" id="checkoutCancelBtn">Cancel</button>
+          <button type="submit" class="admin-primary-btn">Place order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ORDER CONFIRMATION MODAL -->
+  <div class="admin-modal-overlay" id="orderConfirmOverlay">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Order placed!</h2>
+        <button class="admin-modal-close" id="orderConfirmClose">&times;</button>
+      </div>
+      <div class="admin-modal-form">
+        <p id="orderConfirmText"></p>
+        <div class="admin-modal-actions">
+          <button type="button" class="admin-primary-btn" id="orderConfirmOkBtn">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- SEARCH RESULTS DROPDOWN (lives next to search input via JS positioning) -->
   <div class="search-results" id="searchResults"></div>

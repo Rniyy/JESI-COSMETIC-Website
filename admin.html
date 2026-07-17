@@ -15,6 +15,7 @@
       <div class="admin-brand">JESI-COSMETIC <span>Admin</span></div>
       <nav class="admin-nav">
         <button class="admin-nav-btn active" data-view="products">Products</button>
+        <button class="admin-nav-btn" data-view="orders">Orders</button>
         <button class="admin-nav-btn" data-view="users">Users</button>
       </nav>
       <div class="admin-sidebar-foot">
@@ -53,6 +54,29 @@
                 </tr>
               </thead>
               <tbody id="productsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ORDERS VIEW -->
+        <section class="admin-view" id="view-orders" style="display:none;">
+          <div class="admin-view-head">
+            <h1>Orders</h1>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Placed</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody"></tbody>
             </table>
           </div>
         </section>
@@ -168,6 +192,33 @@
     </div>
   </div>
 
+  <!-- ORDER DETAIL MODAL -->
+  <div class="admin-modal-overlay" id="orderModalOverlay">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Order #<span id="orderModalId"></span></h2>
+        <button class="admin-modal-close" id="orderModalClose">&times;</button>
+      </div>
+      <div class="admin-modal-form">
+        <div id="orderModalBody"></div>
+        <label>Status
+          <select id="orderStatusSelect">
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </label>
+        <div class="admin-modal-actions">
+          <button type="button" class="admin-secondary-btn" id="orderModalCancelBtn">Close</button>
+          <button type="button" class="admin-primary-btn" id="orderStatusSaveBtn">Update status</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="adminDashboard.js"></script>
 </body>
+
 </html>

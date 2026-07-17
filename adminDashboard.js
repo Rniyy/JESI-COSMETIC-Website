@@ -1,6 +1,7 @@
 const API = 'http://localhost:3000/api';
 
 let allProducts = [];
+let allOrders    = [];
 let allUsers     = [];
 let currentAdminId = null;
 
@@ -214,6 +215,144 @@ function initProductModal() {
 /* ─────────────────────────────────────────────────────────
    USERS
 ───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   ORDERS
+───────────────────────────────────────────────────────── */
+async function loadOrders() {
+  try {
+    const res  = await fetch(`${API}/admin/orders`, { credentials: 'include' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    allOrders = json.data;
+    renderOrdersTable();
+  } catch (err) {
+    console.error('Failed to load orders:', err);
+  }
+}
+
+const STATUS_LABELS = {
+  pending:    'Pending',
+  processing: 'Processing',
+  shipped:    'Shipped',
+  delivered:  'Delivered',
+  cancelled:  'Cancelled',
+};
+
+function renderOrdersTable() {
+  const tbody = document.getElementById('ordersTableBody');
+  tbody.innerHTML = '';
+
+  if (allOrders.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#a08e88; padding:24px;">No orders placed yet.</td></tr>';
+    return;
+  }
+
+  allOrders.forEach(o => {
+    const tr = document.createElement('tr');
+    const placedDate = new Date(o.placed_at).toLocaleDateString();
+    tr.innerHTML = `
+      <td>#${o.id}</td>
+      <td>${o.customer_name}<br><span style="color:#a08e88; font-size:12px;">${o.customer_email}</span></td>
+      <td>${o.item_count}</td>
+      <td>$${Number(o.total).toFixed(2)}</td>
+      <td><span class="admin-badge-pill">${STATUS_LABELS[o.status] || o.status}</span></td>
+      <td>${placedDate}</td>
+      <td><button class="admin-icon-btn edit" data-id="${o.id}">View</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.edit').forEach(btn => {
+    btn.addEventListener('click', () => openOrderModal(Number(btn.dataset.id)));
+  });
+}
+
+async function openOrderModal(orderId) {
+  const overlay = document.getElementById('orderModalOverlay');
+  const bodyEl  = document.getElementById('orderModalBody');
+  const idEl    = document.getElementById('orderModalId');
+  const statusSelect = document.getElementById('orderStatusSelect');
+
+  idEl.textContent = orderId;
+  bodyEl.innerHTML = '<p>Loading…</p>';
+  overlay.classList.add('open');
+
+  try {
+    const res  = await fetch(`${API}/admin/orders/${orderId}`, { credentials: 'include' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+
+    const o = json.data;
+    statusSelect.value = o.status;
+
+    const itemsHTML = o.items.map(i => `
+      <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:13px;">
+        <span>${i.product_name} × ${i.quantity}</span>
+        <span>$${(Number(i.product_price) * i.quantity).toFixed(2)}</span>
+      </div>
+    `).join('');
+
+    bodyEl.innerHTML = `
+      <p style="font-size:13px; color:#6b5b56; margin:0 0 12px;">
+        <strong>${o.customer_name}</strong> (${o.customer_email})<br>
+        ${o.full_name ? `${o.full_name}, ${o.line1}${o.line2 ? ', ' + o.line2 : ''}, ${o.city}${o.state_province ? ', ' + o.state_province : ''} ${o.postal_code || ''}, ${o.country}` : 'No address on file'}
+      </p>
+      <div style="border-top:1px solid #f0e4de; border-bottom:1px solid #f0e4de; padding:8px 0; margin-bottom:12px;">
+        ${itemsHTML}
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b5b56;">
+        <span>Subtotal</span><span>$${Number(o.subtotal).toFixed(2)}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b5b56; margin-bottom:8px;">
+        <span>Shipping</span><span>$${Number(o.shipping_fee).toFixed(2)}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-weight:700; color:#3a2e2b;">
+        <span>Total</span><span>$${Number(o.total).toFixed(2)}</span>
+      </div>
+    `;
+
+    document.getElementById('orderStatusSaveBtn').onclick = () => updateOrderStatus(orderId, statusSelect.value);
+  } catch (err) {
+    console.error(err);
+    bodyEl.innerHTML = '<p>Could not load this order.</p>';
+  }
+}
+
+async function updateOrderStatus(orderId, status) {
+  try {
+    const res  = await fetch(`${API}/admin/orders/${orderId}/status`, {
+      method: 'PATCH', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const json = await res.json();
+    if (!json.success) {
+      alert(json.message || 'Could not update status');
+      return;
+    }
+    document.getElementById('orderModalOverlay').classList.remove('open');
+    loadOrders();
+  } catch (err) {
+    console.error(err);
+    alert('Something went wrong updating this order');
+  }
+}
+
+function initOrderModal() {
+  document.getElementById('orderModalClose').addEventListener('click', () => {
+    document.getElementById('orderModalOverlay').classList.remove('open');
+  });
+  document.getElementById('orderModalCancelBtn').addEventListener('click', () => {
+    document.getElementById('orderModalOverlay').classList.remove('open');
+  });
+  document.getElementById('orderModalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'orderModalOverlay') e.target.classList.remove('open');
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   USERS
+───────────────────────────────────────────────────────── */
 async function loadUsers() {
   try {
     const res  = await fetch(`${API}/admin/users`, { credentials: 'include' });
@@ -306,6 +445,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   initNav();
   initProductModal();
+  initOrderModal();
   loadProducts();
+  loadOrders();
   loadUsers();
 });

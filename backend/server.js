@@ -10,6 +10,7 @@ const productsRoutes    = require('./routes/products');
 const cartRoutes         = require('./routes/cart');
 const wishlistRoutes     = require('./routes/wishlist');
 const authRoutes         = require('./routes/auth');
+const checkoutRoutes     = require('./routes/checkout');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +40,7 @@ app.use('/api/auth',     authRoutes);
 app.use('/api/admin',    requireAdmin, adminRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/cart',     requireAuth, cartRoutes);
+app.use('/api/checkout', requireAuth, checkoutRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'ok' }));

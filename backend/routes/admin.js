@@ -175,4 +175,82 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
+/* ═══════════════════════════════════════════════════════════
+   ORDERS  (admin sees every customer's orders, not their own)
+═══════════════════════════════════════════════════════════ */
+
+/**
+ * GET /api/admin/orders
+ */
+router.get('/orders', async (req, res) => {
+  try {
+    const [orders] = await pool.query(
+      `SELECT o.id, o.status, o.subtotal, o.shipping_fee, o.total, o.placed_at,
+              u.name AS customer_name, u.email AS customer_email,
+              COUNT(oi.id) AS item_count
+       FROM orders o
+       JOIN users u ON u.id = o.user_id
+       LEFT JOIN order_items oi ON oi.order_id = o.id
+       GROUP BY o.id
+       ORDER BY o.placed_at DESC`
+    );
+    res.json({ success: true, data: orders });
+  } catch (err) {
+    console.error('GET /admin/orders error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+  }
+});
+
+/**
+ * GET /api/admin/orders/:id
+ */
+router.get('/orders/:id', async (req, res) => {
+  try {
+    const [[order]] = await pool.query(
+      `SELECT o.*, u.name AS customer_name, u.email AS customer_email,
+              a.full_name, a.phone, a.line1, a.line2, a.city, a.state_province, a.postal_code, a.country
+       FROM orders o
+       JOIN users u ON u.id = o.user_id
+       LEFT JOIN addresses a ON a.id = o.address_id
+       WHERE o.id = ?`,
+      [req.params.id]
+    );
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const [items] = await pool.query(
+      'SELECT product_id, product_name, product_price, quantity FROM order_items WHERE order_id = ?',
+      [req.params.id]
+    );
+
+    res.json({ success: true, data: { ...order, items } });
+  } catch (err) {
+    console.error('GET /admin/orders/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch order' });
+  }
+});
+
+/**
+ * PATCH /api/admin/orders/:id/status   { status }
+ */
+router.patch('/orders/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: `status must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    const [result] = await pool.query('UPDATE orders SET status = ? WHERE id = ?', [status, req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('PATCH /admin/orders/:id/status error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update order status' });
+  }
+});
+
 module.exports = router;

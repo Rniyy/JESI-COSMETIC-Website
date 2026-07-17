@@ -47,9 +47,15 @@ function buildProductCardHTML(p) {
 async function renderShopProducts() {
   const grid = document.querySelector('.products-grid');
   if (!grid) return; // this page has no product grid (e.g. account/admin pages)
+  if (grid.dataset.static === 'true') return; // curated/static grid (e.g. homepage bestsellers) — leave untouched
+
+  const category = grid.dataset.categoryFilter || '';
 
   try {
-    const res  = await fetch(`${API}/products?limit=200`, { credentials: 'include' });
+    const url = category
+      ? `${API}/products?category=${encodeURIComponent(category)}&limit=200`
+      : `${API}/products?limit=200`;
+    const res  = await fetch(url, { credentials: 'include' });
     const json = await res.json();
     if (!json.success) throw new Error(json.message);
 
@@ -151,7 +157,7 @@ function initCart() {
       }
 
       cartEmpty.style.display = 'none';
-      cartFoot.style.display  = '';
+      cartFoot.style.display  = 'flex';
       cartSubtotal.textContent = '$' + parseFloat(json.subtotal).toFixed(2);
 
       items.forEach(item => {
@@ -338,9 +344,10 @@ function initAuth() {
   authOverlay.addEventListener('click', closeAuth);
 
   const editAccountView = document.getElementById('editAccountView');
+  const ordersView      = document.getElementById('ordersView');
 
   function showView(view) {
-    [loginForm, registerForm, forgotForm, accountView, editAccountView].forEach(el => el.style.display = 'none');
+    [loginForm, registerForm, forgotForm, accountView, editAccountView, ordersView].forEach(el => el.style.display = 'none');
     loginError.style.display    = 'none';
     registerError.style.display = 'none';
     forgotSuccess.style.display = 'none';
@@ -351,6 +358,7 @@ function initAuth() {
       forgot:      'Reset password',
       account:     'Your account',
       editAccount: 'Edit account',
+      orders:      'Your orders',
     };
     authTitle.textContent = titles[view];
 
@@ -359,6 +367,7 @@ function initAuth() {
     if (view === 'forgot')      forgotForm.style.display      = 'flex';
     if (view === 'account')     accountView.style.display     = 'flex';
     if (view === 'editAccount') editAccountView.style.display = 'flex';
+    if (view === 'orders')      ordersView.style.display       = 'flex';
   }
 
   document.getElementById('showRegisterForm').addEventListener('click', () => showView('register'));
@@ -378,6 +387,43 @@ function initAuth() {
     showView('editAccount');
   });
   document.getElementById('backToAccountView').addEventListener('click', () => showView('account'));
+
+  document.getElementById('showOrdersView').addEventListener('click', () => {
+    showView('orders');
+    loadOrders();
+  });
+  document.getElementById('backToAccountFromOrders').addEventListener('click', () => showView('account'));
+
+  async function loadOrders() {
+    const listEl = document.getElementById('ordersList');
+    listEl.innerHTML = '<p class="orders-empty">Loading…</p>';
+    try {
+      const res  = await fetch(`${API}/checkout/orders`, { credentials: 'include' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+
+      if (json.data.length === 0) {
+        listEl.innerHTML = '<p class="orders-empty">No orders yet — your placed orders will show up here.</p>';
+        return;
+      }
+
+      listEl.innerHTML = json.data.map(o => `
+        <div class="order-card">
+          <div class="order-card-head">
+            <span class="order-card-id">Order #${o.id}</span>
+            <span class="order-card-status">${o.status}</span>
+          </div>
+          <div class="order-card-meta">
+            <span>${new Date(o.placed_at).toLocaleDateString()} — ${o.item_count} item${o.item_count == 1 ? '' : 's'}</span>
+            <span>$${parseFloat(o.total).toFixed(2)}</span>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+      listEl.innerHTML = '<p class="orders-empty">Could not load your orders — try again later.</p>';
+    }
+  }
 
   document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -568,6 +614,103 @@ function initAuth() {
 
   // Check login state quietly on page load (doesn't open the panel)
   refreshCurrentUser();
+}
+
+/* ─────────────────────────────────────────────────────────
+   CHECKOUT — turns the current cart into a real order
+───────────────────────────────────────────────────────── */
+function initCheckout() {
+  const checkoutBtn      = document.getElementById('checkoutBtn');
+  const checkoutOverlay  = document.getElementById('checkoutModalOverlay');
+  const checkoutClose    = document.getElementById('checkoutModalClose');
+  const checkoutCancel   = document.getElementById('checkoutCancelBtn');
+  const checkoutForm     = document.getElementById('checkoutForm');
+  const checkoutError    = document.getElementById('checkoutError');
+
+  const confirmOverlay = document.getElementById('orderConfirmOverlay');
+  const confirmClose   = document.getElementById('orderConfirmClose');
+  const confirmOkBtn    = document.getElementById('orderConfirmOkBtn');
+  const confirmText    = document.getElementById('orderConfirmText');
+
+  if (!checkoutBtn) return;
+
+  function openCheckout() {
+    checkoutError.style.display = 'none';
+    // Close the cart drawer first so the checkout modal isn't hidden behind it
+    const cartPanel   = document.getElementById('cartPanel');
+    const cartOverlay = document.getElementById('cartOverlay');
+    if (cartPanel)   cartPanel.classList.remove('open');
+    if (cartOverlay) cartOverlay.classList.remove('open');
+    document.body.style.overflow = 'hidden';
+    checkoutOverlay.classList.add('open');
+  }
+  function closeCheckout() {
+    checkoutOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeConfirm() {
+    confirmOverlay.classList.remove('open');
+  }
+
+  checkoutBtn.addEventListener('click', openCheckout);
+  checkoutClose.addEventListener('click', closeCheckout);
+  checkoutCancel.addEventListener('click', closeCheckout);
+  checkoutOverlay.addEventListener('click', (e) => { if (e.target === checkoutOverlay) closeCheckout(); });
+
+  confirmClose.addEventListener('click', closeConfirm);
+  confirmOkBtn.addEventListener('click', closeConfirm);
+  confirmOverlay.addEventListener('click', (e) => { if (e.target === confirmOverlay) closeConfirm(); });
+
+  checkoutForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    checkoutError.style.display = 'none';
+
+    const address = {
+      full_name:      document.getElementById('checkoutFullName').value.trim(),
+      phone:          document.getElementById('checkoutPhone').value.trim(),
+      line1:          document.getElementById('checkoutLine1').value.trim(),
+      line2:          document.getElementById('checkoutLine2').value.trim(),
+      city:           document.getElementById('checkoutCity').value.trim(),
+      state_province: document.getElementById('checkoutState').value.trim(),
+      postal_code:    document.getElementById('checkoutPostalCode').value.trim(),
+      country:        document.getElementById('checkoutCountry').value.trim(),
+    };
+
+    try {
+      const res  = await fetch(`${API}/checkout`, {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({ address }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        checkoutError.textContent   = json.message || 'Could not place order';
+        checkoutError.style.display = 'block';
+        return;
+      }
+
+      closeCheckout();
+      checkoutForm.reset();
+      document.getElementById('checkoutCountry').value = 'Cambodia';
+
+      confirmText.textContent = `Order #${json.data.id} placed — total $${json.data.total}. Thank you!`;
+      confirmOverlay.classList.add('open');
+
+      // Cart is now empty server-side — refresh the badge/panel to reflect that
+      document.dispatchEvent(new CustomEvent('cart:changed'));
+
+      // Close the cart drawer itself, if it's open
+      const cartPanel   = document.getElementById('cartPanel');
+      const cartOverlay = document.getElementById('cartOverlay');
+      if (cartPanel)   cartPanel.classList.remove('open');
+      if (cartOverlay) cartOverlay.classList.remove('open');
+    } catch (err) {
+      checkoutError.textContent   = 'Something went wrong — try again';
+      checkoutError.style.display = 'block';
+      console.error(err);
+    }
+  });
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -1038,6 +1181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAuth();
   await renderShopProducts(); // cards must exist in the DOM before the lines below attach listeners to them
   initCart();
+  initCheckout();
   initWishlist();
   initSearch();
   initFilters();
