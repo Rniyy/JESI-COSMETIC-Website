@@ -9,6 +9,57 @@ const API = 'http://localhost:3000/api';
 /* ─────────────────────────────────────────────────────────
    HERO SLIDER
 ───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   PRODUCT GRID — rendered dynamically from the database,
+   so admin edits/adds/deletes show up without touching HTML.
+───────────────────────────────────────────────────────── */
+function buildProductCardHTML(p) {
+  const badgeClass = p.badge === 'Sale' ? 'prod-badge prod-badge-sale' : 'prod-badge';
+  const badgeHTML  = p.badge ? `<span class="${badgeClass}">${p.badge}</span>` : '';
+  const oldPriceHTML = p.old_price
+    ? ` <s class="prod-old">$${parseFloat(p.old_price).toFixed(0)}</s>`
+    : '';
+  const ratingText = p.rating ? `${parseFloat(p.rating).toFixed(1)} (${p.review_count || 0})` : '';
+
+  return `
+    <div class="product-card" data-category="${p.category}" data-name="${p.name}" data-price="${p.price}" data-product-id="${p.id}">
+      <div class="product-img ${p.image_class || ''}">
+        ${p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : ''}
+        <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+        ${badgeHTML}
+      </div>
+      <div class="product-info">
+        <span class="prod-brand">${p.brand || 'Medicube'}</span>
+        <h3 class="prod-name">${p.name}</h3>
+        <div class="prod-stars">
+          <i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i><i class="ti ti-star-filled"></i>
+          <span>${ratingText}</span>
+        </div>
+        <div class="prod-bottom">
+          <span class="prod-price">$${parseFloat(p.price).toFixed(0)}${oldPriceHTML}</span>
+          <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus"></i></button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function renderShopProducts() {
+  const grid = document.querySelector('.products-grid');
+  if (!grid) return; // this page has no product grid (e.g. account/admin pages)
+
+  try {
+    const res  = await fetch(`${API}/products?limit=200`, { credentials: 'include' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+
+    grid.innerHTML = json.data.map(buildProductCardHTML).join('');
+  } catch (err) {
+    console.error('Failed to load products:', err);
+    grid.innerHTML = '<p class="products-loading">Could not load products — check your connection and try refreshing.</p>';
+  }
+}
+
 function initSlider() {
   const hero = document.getElementById('hero');
   if (!hero) return;
@@ -982,9 +1033,10 @@ function showToast(msg, type = 'success') {
 /* ─────────────────────────────────────────────────────────
    BOOT
 ───────────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initSlider();
   initAuth();
+  await renderShopProducts(); // cards must exist in the DOM before the lines below attach listeners to them
   initCart();
   initWishlist();
   initSearch();
