@@ -6,13 +6,6 @@
 
 const API = 'http://localhost:3000/api';
 
-/* ─────────────────────────────────────────────────────────
-   HERO SLIDER
-───────────────────────────────────────────────────────── */
-/* ─────────────────────────────────────────────────────────
-   PRODUCT GRID — rendered dynamically from the database,
-   so admin edits/adds/deletes show up without touching HTML.
-───────────────────────────────────────────────────────── */
 function buildProductCardHTML(p) {
   const badgeClass = p.badge === 'Sale' ? 'prod-badge prod-badge-sale' : 'prod-badge';
   const badgeHTML  = p.badge ? `<span class="${badgeClass}">${p.badge}</span>` : '';

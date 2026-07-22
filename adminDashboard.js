@@ -5,9 +5,9 @@ let allOrders    = [];
 let allUsers     = [];
 let currentAdminId = null;
 
-/* ─────────────────────────────────────────────────────────
-   ACCESS GATE — redirect anyone who isn't an admin
-───────────────────────────────────────────────────────── */
+
+//ACCESS GATE — redirect anyone who isn't an admin
+
 async function checkAdminAccess() {
   try {
     const res  = await fetch(`${API}/auth/me`, { credentials: 'include' });
@@ -30,9 +30,9 @@ async function checkAdminAccess() {
   }
 }
 
-/* ─────────────────────────────────────────────────────────
-   NAV — switch between Products / Users views
-───────────────────────────────────────────────────────── */
+
+//NAV — switch between Products / Users views
+
 function initNav() {
   const navBtns = document.querySelectorAll('.admin-nav-btn');
   navBtns.forEach(btn => {
@@ -50,9 +50,7 @@ function initNav() {
   });
 }
 
-/* ─────────────────────────────────────────────────────────
-   PRODUCTS
-───────────────────────────────────────────────────────── */
+//Products
 async function loadProducts() {
   try {
     const res  = await fetch(`${API}/admin/products`, { credentials: 'include' });
@@ -212,12 +210,12 @@ function initProductModal() {
   document.getElementById('productForm').addEventListener('submit', saveProduct);
 }
 
-/* ─────────────────────────────────────────────────────────
-   USERS
-───────────────────────────────────────────────────────── */
-/* ─────────────────────────────────────────────────────────
-   ORDERS
-───────────────────────────────────────────────────────── */
+
+//USERS
+
+
+//ORDERS
+
 async function loadOrders() {
   try {
     const res  = await fetch(`${API}/admin/orders`, { credentials: 'include' });
@@ -350,9 +348,9 @@ function initOrderModal() {
   });
 }
 
-/* ─────────────────────────────────────────────────────────
-   USERS
-───────────────────────────────────────────────────────── */
+
+//USERS
+
 async function loadUsers() {
   try {
     const res  = await fetch(`${API}/admin/users`, { credentials: 'include' });
@@ -433,9 +431,9 @@ async function deleteUser(id) {
   }
 }
 
-/* ─────────────────────────────────────────────────────────
-   BOOT
-───────────────────────────────────────────────────────── */
+
+//BOOT
+
 document.addEventListener('DOMContentLoaded', async () => {
   const ok = await checkAdminAccess();
   if (!ok) return;

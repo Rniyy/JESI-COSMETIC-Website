@@ -1,6 +1,6 @@
-/* ═══════════════════════════════════════════════════════════
-   JESI-COSMETIC — admin.css
-═══════════════════════════════════════════════════════════ */
+
+/*JESI-COSMETIC — admin.css*/
+
 
 * { box-sizing: border-box; }
 
@@ -16,7 +16,7 @@ body {
   min-height: 100vh;
 }
 
-/* ───────── SIDEBAR ───────── */
+/*  SIDEBAR  */
 .admin-sidebar {
   width: 240px;
   flex-shrink: 0;
@@ -90,7 +90,7 @@ body {
 }
 .admin-logout-btn:hover { background: #fbe4e0; }
 
-/* ───────── MAIN ───────── */
+/*MAIN*/
 .admin-main {
   flex: 1;
   padding: 32px 40px;
@@ -141,7 +141,7 @@ body {
 }
 .admin-secondary-btn:hover { background: #ecdfd9; }
 
-/* ───────── TABLE ───────── */
+/*TABLE*/
 .admin-table-wrap {
   background: #fff;
   border: 1px solid #f0e4de;
@@ -222,7 +222,7 @@ body {
 .admin-icon-btn.promote { background: #eaf3ff; color: #2f6fb0; }
 .admin-icon-btn.promote:hover { background: #d9eaff; }
 
-/* ───────── MODAL ───────── */
+/*MODAL*/
 .admin-modal-overlay {
   position: fixed;
   inset: 0;
