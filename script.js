@@ -6,6 +6,13 @@
 
 const API = 'http://localhost:3000/api';
 
+/* ─────────────────────────────────────────────────────────
+   HERO SLIDER
+───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   PRODUCT GRID — rendered dynamically from the database,
+   so admin edits/adds/deletes show up without touching HTML.
+───────────────────────────────────────────────────────── */
 function buildProductCardHTML(p) {
   const badgeClass = p.badge === 'Sale' ? 'prod-badge prod-badge-sale' : 'prod-badge';
   const badgeHTML  = p.badge ? `<span class="${badgeClass}">${p.badge}</span>` : '';
@@ -187,12 +194,16 @@ function initCart() {
           const span = btn.closest('.qty-wrap').querySelector('.qty-num');
           let qty = parseInt(span.textContent);
           qty = act === 'inc' ? qty + 1 : Math.max(1, qty - 1);
-          await fetch(`${API}/cart/${id}`, {
+          const res  = await fetch(`${API}/cart/${id}`, {
             method:      'PATCH',
             credentials: 'include',
             headers:     { 'Content-Type': 'application/json' },
             body:        JSON.stringify({ quantity: qty }),
           });
+          const json = await res.json();
+          if (!json.success) {
+            showToast(json.message || 'Could not update quantity', 'error');
+          }
           loadCart();
         });
       });

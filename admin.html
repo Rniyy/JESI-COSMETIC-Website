@@ -175,10 +175,14 @@
               <option value="Sale">Sale</option>
             </select>
           </label>
-          <label class="admin-checkbox-label">
-            <input type="checkbox" id="productInStock" checked />
-            In stock
+          <label>Stock quantity
+            <input type="number" id="productStockQuantity" min="0" step="1" value="50" required />
           </label>
+        </div>
+        <div class="admin-form-row">
+          <p style="font-size:12px; color:#a08e88; margin:0; grid-column: span 2;">
+            "In stock" is set automatically — 0 quantity hides the product from the shop.
+          </p>
         </div>
         <label>Description
           <textarea id="productDescription" rows="3"></textarea>

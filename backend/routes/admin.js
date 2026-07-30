@@ -22,28 +22,31 @@ router.get('/products', async (req, res) => {
 /**
  * POST /api/admin/products
  * Body: name, category, brand, price, old_price, image_url, image_class,
- *       rating, review_count, badge, description, in_stock
+ *       rating, review_count, badge, description, stock_quantity
+ * (in_stock is derived automatically from stock_quantity, not sent by the client)
  */
 router.post('/products', async (req, res) => {
   try {
     const {
       name, category, brand, price, old_price,
       image_url, image_class, rating, review_count,
-      badge, description, in_stock,
+      badge, description, stock_quantity,
     } = req.body;
 
     if (!name || !category || price === undefined) {
       return res.status(400).json({ success: false, message: 'name, category and price are required' });
     }
 
+    const qty = Math.max(0, parseInt(stock_quantity, 10) || 0);
+
     const [result] = await pool.query(
       `INSERT INTO products
-        (name, category, brand, price, old_price, image_url, image_class, rating, review_count, badge, description, in_stock)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (name, category, brand, price, old_price, image_url, image_class, rating, review_count, badge, description, stock_quantity, in_stock)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name, category, brand || 'Medicube', price, old_price || null,
         image_url || null, image_class || null, rating || null, review_count || null,
-        badge || null, description || null, in_stock === undefined ? 1 : in_stock,
+        badge || null, description || null, qty, qty > 0 ? 1 : 0,
       ]
     );
 
@@ -64,19 +67,21 @@ router.put('/products/:id', async (req, res) => {
     const {
       name, category, brand, price, old_price,
       image_url, image_class, rating, review_count,
-      badge, description, in_stock,
+      badge, description, stock_quantity,
     } = req.body;
+
+    const qty = Math.max(0, parseInt(stock_quantity, 10) || 0);
 
     const [result] = await pool.query(
       `UPDATE products SET
         name = ?, category = ?, brand = ?, price = ?, old_price = ?,
         image_url = ?, image_class = ?, rating = ?, review_count = ?,
-        badge = ?, description = ?, in_stock = ?
+        badge = ?, description = ?, stock_quantity = ?, in_stock = ?
        WHERE id = ?`,
       [
         name, category, brand || 'Medicube', price, old_price || null,
         image_url || null, image_class || null, rating || null, review_count || null,
-        badge || null, description || null, in_stock === undefined ? 1 : in_stock,
+        badge || null, description || null, qty, qty > 0 ? 1 : 0,
         req.params.id,
       ]
     );

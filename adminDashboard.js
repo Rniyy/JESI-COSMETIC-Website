@@ -5,9 +5,9 @@ let allOrders    = [];
 let allUsers     = [];
 let currentAdminId = null;
 
-
-//ACCESS GATE — redirect anyone who isn't an admin
-
+/* ─────────────────────────────────────────────────────────
+   ACCESS GATE — redirect anyone who isn't an admin
+───────────────────────────────────────────────────────── */
 async function checkAdminAccess() {
   try {
     const res  = await fetch(`${API}/auth/me`, { credentials: 'include' });
@@ -30,9 +30,9 @@ async function checkAdminAccess() {
   }
 }
 
-
-//NAV — switch between Products / Users views
-
+/* ─────────────────────────────────────────────────────────
+   NAV — switch between Products / Users views
+───────────────────────────────────────────────────────── */
 function initNav() {
   const navBtns = document.querySelectorAll('.admin-nav-btn');
   navBtns.forEach(btn => {
@@ -50,7 +50,9 @@ function initNav() {
   });
 }
 
-//Products
+/* ─────────────────────────────────────────────────────────
+   PRODUCTS
+───────────────────────────────────────────────────────── */
 async function loadProducts() {
   try {
     const res  = await fetch(`${API}/admin/products`, { credentials: 'include' });
@@ -74,7 +76,7 @@ function renderProductsTable() {
       <td>${p.name}</td>
       <td>${p.category}</td>
       <td>$${Number(p.price).toFixed(2)}</td>
-      <td>${p.in_stock ? '<span class="admin-badge-pill">In stock</span>' : '<span class="admin-badge-pill out-of-stock">Out of stock</span>'}</td>
+      <td>${p.in_stock ? `<span class="admin-badge-pill">${p.stock_quantity} in stock</span>` : '<span class="admin-badge-pill out-of-stock">Out of stock</span>'}</td>
       <td>${p.badge ? `<span class="admin-badge-pill">${p.badge}</span>` : ''}</td>
       <td>
         <div class="admin-row-actions">
@@ -117,12 +119,11 @@ function openProductModal(productId = null) {
     document.getElementById('productRating').value       = p.rating || '';
     document.getElementById('productReviewCount').value  = p.review_count || '';
     document.getElementById('productBadge').value        = p.badge || '';
-    document.getElementById('productInStock').checked    = !!p.in_stock;
+    document.getElementById('productStockQuantity').value = p.stock_quantity != null ? p.stock_quantity : 0;
     document.getElementById('productDescription').value  = p.description || '';
   } else {
     title.textContent = 'Add product';
     document.getElementById('productId').value = '';
-    document.getElementById('productInStock').checked = true;
   }
 
   overlay.classList.add('open');
@@ -150,7 +151,7 @@ async function saveProduct(e) {
     review_count:  document.getElementById('productReviewCount').value.trim(),
     badge:         document.getElementById('productBadge').value || null,
     description:   document.getElementById('productDescription').value.trim(),
-    in_stock:      document.getElementById('productInStock').checked ? 1 : 0,
+    stock_quantity: parseInt(document.getElementById('productStockQuantity').value, 10) || 0,
   };
 
   try {
@@ -210,12 +211,12 @@ function initProductModal() {
   document.getElementById('productForm').addEventListener('submit', saveProduct);
 }
 
-
-//USERS
-
-
-//ORDERS
-
+/* ─────────────────────────────────────────────────────────
+   USERS
+───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   ORDERS
+───────────────────────────────────────────────────────── */
 async function loadOrders() {
   try {
     const res  = await fetch(`${API}/admin/orders`, { credentials: 'include' });
@@ -348,9 +349,9 @@ function initOrderModal() {
   });
 }
 
-
-//USERS
-
+/* ─────────────────────────────────────────────────────────
+   USERS
+───────────────────────────────────────────────────────── */
 async function loadUsers() {
   try {
     const res  = await fetch(`${API}/admin/users`, { credentials: 'include' });
@@ -431,9 +432,9 @@ async function deleteUser(id) {
   }
 }
 
-
-//BOOT
-
+/* ─────────────────────────────────────────────────────────
+   BOOT
+───────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
   const ok = await checkAdminAccess();
   if (!ok) return;

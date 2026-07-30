@@ -46,6 +46,28 @@ router.post('/', async (req, res) => {
     const shippingFee  = subtotal >= FREE_SHIPPING_ABOVE ? 0 : FLAT_SHIPPING_FEE;
     const total        = subtotal + shippingFee;
 
+    // 1.5. Decrement stock atomically. The WHERE clause doubles as the
+    // check — if another order already took the last units between the
+    // cart snapshot above and this exact instant, affectedRows is 0 and we
+    // roll back the ENTIRE order rather than partially fulfilling it.
+    for (const item of cartItems) {
+      const [stockResult] = await conn.query(
+        `UPDATE products
+         SET stock_quantity = stock_quantity - ?,
+             in_stock = IF(stock_quantity - ? <= 0, 0, 1)
+         WHERE id = ? AND stock_quantity >= ?`,
+        [item.quantity, item.quantity, item.product_id, item.quantity]
+      );
+      if (stockResult.affectedRows === 0) {
+        await conn.rollback();
+        conn.release();
+        return res.status(409).json({
+          success: false,
+          message: `Not enough stock for "${item.name}" — someone else may have just bought the last one. Please update your cart and try again.`,
+        });
+      }
+    }
+
     // 2. Save the address
     const [addrResult] = await conn.query(
       `INSERT INTO addresses (user_id, label, full_name, phone, line1, line2, city, state_province, postal_code, country)

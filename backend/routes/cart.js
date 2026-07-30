@@ -69,9 +69,30 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ success: false, message: 'product_id is required' });
     }
 
-    const [[product]] = await pool.query('SELECT id FROM products WHERE id = ?', [product_id]);
+    const [[product]] = await pool.query(
+      'SELECT id, name, stock_quantity FROM products WHERE id = ?',
+      [product_id]
+    );
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // Check how much of this product is already in the cart, so the total
+    // requested (existing + new) never exceeds what's actually in stock.
+    const ownerClause = req.user
+      ? { sql: 'SELECT quantity FROM cart_items WHERE user_id = ? AND product_id = ?', param: req.user.id }
+      : { sql: 'SELECT quantity FROM cart_items WHERE session_id = ? AND product_id = ?', param: req.sessionId };
+    const [[existing]] = await pool.query(ownerClause.sql, [ownerClause.param, product_id]);
+    const alreadyInCart = existing ? existing.quantity : 0;
+
+    if (alreadyInCart + qty > product.stock_quantity) {
+      const remaining = Math.max(0, product.stock_quantity - alreadyInCart);
+      return res.status(400).json({
+        success: false,
+        message: remaining > 0
+          ? `Only ${remaining} more of "${product.name}" available`
+          : `"${product.name}" is out of stock`,
+      });
     }
 
     if (req.user) {
@@ -108,6 +129,17 @@ router.patch('/:productId', async (req, res) => {
 
     if (!qty || qty < 1) {
       return res.status(400).json({ success: false, message: 'quantity must be a positive integer' });
+    }
+
+    const [[product]] = await pool.query(
+      'SELECT name, stock_quantity FROM products WHERE id = ?',
+      [req.params.productId]
+    );
+    if (product && qty > product.stock_quantity) {
+      return res.status(400).json({
+        success: false,
+        message: `Only ${product.stock_quantity} of "${product.name}" available`,
+      });
     }
 
     const [result] = req.user
