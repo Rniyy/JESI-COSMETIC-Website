@@ -176,6 +176,13 @@
 
       <!-- MY ORDERS VIEW -->
       <div class="auth-account" id="ordersView" style="display:none;">
+        <div class="orders-tabs" id="ordersTabs">
+          <button class="orders-tab-btn active" data-tab="to_pay">To Pay</button>
+          <button class="orders-tab-btn" data-tab="to_receive">To Receive</button>
+          <button class="orders-tab-btn" data-tab="to_review">To Review</button>
+          <button class="orders-tab-btn" data-tab="completed">Recent Order</button>
+          <button class="orders-tab-btn" data-tab="cancelled">Cancelled</button>
+        </div>
         <div class="orders-list" id="ordersList"></div>
         <button class="auth-link-btn" id="backToAccountFromOrders" style="align-self:center; margin-top:16px;">&larr; Back to account</button>
       </div>
@@ -192,34 +199,41 @@
       </div>
       <form class="admin-modal-form" id="checkoutForm">
         <p class="auth-error" id="checkoutError" style="display:none;"></p>
-        <label>Full name
-          <input type="text" id="checkoutFullName" required />
-        </label>
-        <label>Phone (optional)
-          <input type="tel" id="checkoutPhone" />
-        </label>
-        <label>Address line 1
-          <input type="text" id="checkoutLine1" required />
-        </label>
-        <label>Address line 2 (optional)
-          <input type="text" id="checkoutLine2" />
-        </label>
-        <div class="admin-form-row">
-          <label>City
-            <input type="text" id="checkoutCity" required />
+
+        <div id="savedAddressesList"></div>
+        <button type="button" class="auth-link-btn" id="toggleNewAddressForm" style="align-self:flex-start; display:none;">+ Use a new address</button>
+
+        <div id="newAddressFields" style="display:flex; flex-direction:column; gap:14px;">
+          <label>Full name
+            <input type="text" id="checkoutFullName" />
           </label>
-          <label>State/Province (optional)
-            <input type="text" id="checkoutState" />
+          <label>Phone (optional)
+            <input type="tel" id="checkoutPhone" />
           </label>
+          <label>Address line 1
+            <input type="text" id="checkoutLine1" />
+          </label>
+          <label>Address line 2 (optional)
+            <input type="text" id="checkoutLine2" />
+          </label>
+          <div class="admin-form-row">
+            <label>City
+              <input type="text" id="checkoutCity" />
+            </label>
+            <label>State/Province (optional)
+              <input type="text" id="checkoutState" />
+            </label>
+          </div>
+          <div class="admin-form-row">
+            <label>Postal code (optional)
+              <input type="text" id="checkoutPostalCode" />
+            </label>
+            <label>Country
+              <input type="text" id="checkoutCountry" value="Cambodia" />
+            </label>
+          </div>
         </div>
-        <div class="admin-form-row">
-          <label>Postal code (optional)
-            <input type="text" id="checkoutPostalCode" />
-          </label>
-          <label>Country
-            <input type="text" id="checkoutCountry" value="Cambodia" required />
-          </label>
-        </div>
+
         <div class="admin-modal-actions">
           <button type="button" class="admin-secondary-btn" id="checkoutCancelBtn">Cancel</button>
           <button type="submit" class="admin-primary-btn">Place order</button>

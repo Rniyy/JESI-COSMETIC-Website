@@ -7,12 +7,14 @@ const FREE_SHIPPING_ABOVE = 50.00;
 
 /**
  * POST /api/checkout
- * Body: { address: { full_name, phone, line1, line2, city, state_province, postal_code, country } }
+ * Body: EITHER { address_id: 5 } to reuse a saved address,
+ *       OR     { address: { full_name, phone, line1, line2, city, state_province, postal_code, country } }
+ *              to enter a new one — which gets saved to the address book automatically.
  *
  * Turns the logged-in user's current cart into a real order:
  *  1. Snapshot the cart (name/price at time of purchase, so later price
  *     changes never rewrite history)
- *  2. Save the shipping address
+ *  2. Resolve the shipping address (reuse saved, or save a new one)
  *  3. Create the order + order_items
  *  4. Empty the cart
  * All as one DB transaction — if anything fails partway, nothing is committed.
@@ -20,8 +22,21 @@ const FREE_SHIPPING_ABOVE = 50.00;
 router.post('/', async (req, res) => {
   const conn = await pool.getConnection();
   try {
-    const { address } = req.body;
-    if (!address || !address.full_name || !address.line1 || !address.city) {
+    const { address, address_id } = req.body;
+
+    // Validate up front, before opening the transaction.
+    let existingAddress = null;
+    if (address_id) {
+      const [[found]] = await pool.query(
+        'SELECT id FROM addresses WHERE id = ? AND user_id = ?',
+        [address_id, req.user.id]
+      );
+      if (!found) {
+        conn.release();
+        return res.status(400).json({ success: false, message: 'Selected address not found' });
+      }
+      existingAddress = found;
+    } else if (!address || !address.full_name || !address.line1 || !address.city) {
       conn.release();
       return res.status(400).json({ success: false, message: 'A shipping address (name, address line, city) is required' });
     }
@@ -68,22 +83,28 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // 2. Save the address
-    const [addrResult] = await conn.query(
-      `INSERT INTO addresses (user_id, label, full_name, phone, line1, line2, city, state_province, postal_code, country)
-       VALUES (?, 'Checkout', ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        req.user.id, address.full_name, address.phone || null, address.line1,
-        address.line2 || null, address.city, address.state_province || null,
-        address.postal_code || null, address.country || 'Cambodia',
-      ]
-    );
+    // 2. Resolve the shipping address — reuse the saved one, or save the new one just entered.
+    let addressIdForOrder;
+    if (existingAddress) {
+      addressIdForOrder = existingAddress.id;
+    } else {
+      const [addrResult] = await conn.query(
+        `INSERT INTO addresses (user_id, label, full_name, phone, line1, line2, city, state_province, postal_code, country)
+         VALUES (?, 'Saved at checkout', ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          req.user.id, address.full_name, address.phone || null, address.line1,
+          address.line2 || null, address.city, address.state_province || null,
+          address.postal_code || null, address.country || 'Cambodia',
+        ]
+      );
+      addressIdForOrder = addrResult.insertId;
+    }
 
     // 3. Create the order
     const [orderResult] = await conn.query(
       `INSERT INTO orders (user_id, address_id, status, subtotal, shipping_fee, total)
-       VALUES (?, ?, 'pending', ?, ?, ?)`,
-      [req.user.id, addrResult.insertId, subtotal.toFixed(2), shippingFee.toFixed(2), total.toFixed(2)]
+       VALUES (?, ?, 'to_pay', ?, ?, ?)`,
+      [req.user.id, addressIdForOrder, subtotal.toFixed(2), shippingFee.toFixed(2), total.toFixed(2)]
     );
     const orderId = orderResult.insertId;
 
@@ -115,21 +136,36 @@ router.post('/', async (req, res) => {
 
 /**
  * GET /api/checkout/orders
- * List the logged-in user's own order history.
+ * List the logged-in user's own order history, with line items attached
+ * (needed for the tabbed order view and the "Order again" action).
  */
 router.get('/orders', async (req, res) => {
   try {
     const [orders] = await pool.query(
-      `SELECT o.id, o.status, o.subtotal, o.shipping_fee, o.total, o.placed_at,
-              COUNT(oi.id) AS item_count
-       FROM orders o
-       LEFT JOIN order_items oi ON oi.order_id = o.id
-       WHERE o.user_id = ?
-       GROUP BY o.id
-       ORDER BY o.placed_at DESC`,
+      `SELECT id, status, rating, subtotal, shipping_fee, total, placed_at
+       FROM orders WHERE user_id = ? ORDER BY placed_at DESC`,
       [req.user.id]
     );
-    res.json({ success: true, data: orders });
+
+    if (orders.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const orderIds = orders.map(o => o.id);
+    const [items] = await pool.query(
+      `SELECT order_id, product_id, product_name, product_price, quantity
+       FROM order_items WHERE order_id IN (?)`,
+      [orderIds]
+    );
+
+    const itemsByOrder = {};
+    for (const item of items) {
+      if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
+      itemsByOrder[item.order_id].push(item);
+    }
+
+    const data = orders.map(o => ({ ...o, items: itemsByOrder[o.id] || [] }));
+    res.json({ success: true, data });
   } catch (err) {
     console.error('GET /checkout/orders error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch orders' });
@@ -161,6 +197,97 @@ router.get('/orders/:id', async (req, res) => {
   } catch (err) {
     console.error('GET /checkout/orders/:id error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch order' });
+  }
+});
+
+/**
+ * POST /api/checkout/orders/:id/pay
+ * Mock payment — there's no real payment gateway wired up, so this just
+ * simulates a successful payment and moves the order to "to_receive".
+ */
+router.post('/orders/:id/pay', async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      `UPDATE orders SET status = 'to_receive' WHERE id = ? AND user_id = ? AND status = 'to_pay'`,
+      [req.params.id, req.user.id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ success: false, message: 'This order cannot be paid right now' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('POST /checkout/orders/:id/pay error:', err);
+    res.status(500).json({ success: false, message: 'Failed to process payment' });
+  }
+});
+
+/**
+ * POST /api/checkout/orders/:id/cancel
+ * Only allowed while still "to_pay". Restocks every item in the order
+ * inside a transaction, so cancelling doesn't leave stock permanently short.
+ */
+router.post('/orders/:id/cancel', async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [[order]] = await conn.query(
+      `SELECT id FROM orders WHERE id = ? AND user_id = ? AND status = 'to_pay' FOR UPDATE`,
+      [req.params.id, req.user.id]
+    );
+    if (!order) {
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ success: false, message: 'This order can no longer be cancelled' });
+    }
+
+    const [items] = await conn.query(
+      'SELECT product_id, quantity FROM order_items WHERE order_id = ?',
+      [req.params.id]
+    );
+    for (const item of items) {
+      if (item.product_id) {
+        await conn.query(
+          `UPDATE products SET stock_quantity = stock_quantity + ?, in_stock = 1 WHERE id = ?`,
+          [item.quantity, item.product_id]
+        );
+      }
+    }
+
+    await conn.query(`UPDATE orders SET status = 'cancelled' WHERE id = ?`, [req.params.id]);
+    await conn.commit();
+    res.json({ success: true });
+  } catch (err) {
+    await conn.rollback();
+    console.error('POST /checkout/orders/:id/cancel error:', err);
+    res.status(500).json({ success: false, message: 'Failed to cancel order' });
+  } finally {
+    conn.release();
+  }
+});
+
+/**
+ * POST /api/checkout/orders/:id/review   { rating: 1-5 }
+ * Only allowed while "to_review". One star rating per order (not per item).
+ */
+router.post('/orders/:id/review', async (req, res) => {
+  try {
+    const rating = parseInt(req.body.rating, 10);
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: 'rating must be between 1 and 5' });
+    }
+
+    const [result] = await pool.query(
+      `UPDATE orders SET status = 'completed', rating = ? WHERE id = ? AND user_id = ? AND status = 'to_review'`,
+      [rating, req.params.id, req.user.id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(400).json({ success: false, message: 'This order is not ready to be reviewed' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('POST /checkout/orders/:id/review error:', err);
+    res.status(500).json({ success: false, message: 'Failed to submit review' });
   }
 });
 

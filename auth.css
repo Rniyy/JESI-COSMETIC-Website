@@ -359,3 +359,110 @@
   font-size: 14px;
   padding: 24px 0;
 }
+
+/* ───────── ORDER TABS ───────── */
+.orders-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #f0e4de;
+}
+
+.orders-tab-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #6b5b56;
+  background: #f4ece8;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.orders-tab-btn:hover { background: #ecdfd9; }
+.orders-tab-btn.active { background: #dda297; color: #fff; }
+
+/* ───────── ORDER CARD CONTENTS ───────── */
+.order-card-items {
+  font-size: 12.5px;
+  color: #6b5b56;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.order-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.order-card-actions button {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.order-btn-primary { background: #dda297; color: #fff; }
+.order-btn-primary:hover { background: #cf897c; }
+
+.order-btn-secondary { background: #f4ece8; color: #6b5b56; }
+.order-btn-secondary:hover { background: #ecdfd9; }
+
+.order-star-picker {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0;
+  font-size: 22px;
+  cursor: pointer;
+}
+.order-star-picker .star { color: #e0d5cf; transition: color 0.1s ease; }
+.order-star-picker .star.filled { color: #dda297; }
+
+.order-rating-display {
+  font-size: 15px;
+  color: #dda297;
+  margin: 4px 0;
+}
+
+/* ───────── SAVED ADDRESS PICKER (checkout) ───────── */
+.saved-address-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1.5px solid #ecdfd9;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.saved-address-option:has(input:checked) {
+  border-color: #dda297;
+  background: #fdf6f4;
+}
+.saved-address-option input[type="radio"] {
+  margin-top: 3px;
+}
+.saved-address-text {
+  font-size: 13px;
+  color: #3a2e2b;
+  line-height: 1.4;
+  flex: 1;
+}
+.saved-address-text strong { display: block; font-size: 13.5px; }
+.saved-address-delete {
+  background: none;
+  border: none;
+  color: #b03a2e;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+}

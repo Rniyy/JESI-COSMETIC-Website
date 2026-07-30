@@ -242,7 +242,9 @@ router.get('/orders/:id', async (req, res) => {
 router.patch('/orders/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    // Admin drives the middle of the lifecycle (shipping progress + cancellation).
+    // to_pay and completed are customer-driven transitions (pay button, submitting a review).
+    const validStatuses = ['to_pay', 'to_receive', 'to_review', 'completed', 'cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: `status must be one of: ${validStatuses.join(', ')}` });
     }

@@ -230,10 +230,10 @@ async function loadOrders() {
 }
 
 const STATUS_LABELS = {
-  pending:    'Pending',
-  processing: 'Processing',
-  shipped:    'Shipped',
-  delivered:  'Delivered',
+  to_pay:     'To Pay',
+  to_receive: 'To Receive',
+  to_review:  'To Review',
+  completed:  'Completed',
   cancelled:  'Cancelled',
 };
 

@@ -392,11 +392,175 @@ function initAuth() {
   });
   document.getElementById('backToAccountView').addEventListener('click', () => showView('account'));
 
+  let ordersCache = [];
+  let activeOrdersTab = 'to_pay';
+
   document.getElementById('showOrdersView').addEventListener('click', () => {
     showView('orders');
     loadOrders();
   });
   document.getElementById('backToAccountFromOrders').addEventListener('click', () => showView('account'));
+
+  document.querySelectorAll('.orders-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.orders-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeOrdersTab = btn.dataset.tab;
+      renderOrdersList();
+    });
+  });
+
+  const STATUS_EMPTY_MESSAGES = {
+    to_pay:     "Nothing waiting on payment.",
+    to_receive: "Nothing on its way yet.",
+    to_review:  "Nothing ready to review yet.",
+    completed:  "No completed orders yet.",
+    cancelled:  "No cancelled orders.",
+  };
+
+  function itemsSummaryHTML(items) {
+    return items.map(i => `${i.product_name} × ${i.quantity}`).join('<br>');
+  }
+
+  function starPickerHTML(orderId) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+      stars += `<span class="star" data-order-id="${orderId}" data-value="${i}">★</span>`;
+    }
+    return `<div class="order-star-picker" data-order-id="${orderId}">${stars}</div>`;
+  }
+
+  function ratingDisplayHTML(rating) {
+    if (!rating) return '';
+    return `<div class="order-rating-display">${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}</div>`;
+  }
+
+  function renderOrdersList() {
+    const listEl = document.getElementById('ordersList');
+    const filtered = ordersCache.filter(o => o.status === activeOrdersTab);
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<p class="orders-empty">${STATUS_EMPTY_MESSAGES[activeOrdersTab] || 'Nothing here yet.'}</p>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(o => {
+      let actionsHTML = '';
+
+      if (o.status === 'to_pay') {
+        actionsHTML = `
+          <div class="order-card-actions">
+            <button class="order-btn-secondary" data-action="cancel" data-order-id="${o.id}">Cancel</button>
+            <button class="order-btn-primary" data-action="pay" data-order-id="${o.id}">Pay Now</button>
+          </div>`;
+      } else if (o.status === 'to_review') {
+        actionsHTML = `
+          ${starPickerHTML(o.id)}
+          <div class="order-card-actions">
+            <button class="order-btn-primary" data-action="submit-review" data-order-id="${o.id}">Submit Review</button>
+          </div>`;
+      } else if (o.status === 'completed') {
+        actionsHTML = `
+          ${ratingDisplayHTML(o.rating)}
+          <div class="order-card-actions">
+            <button class="order-btn-primary" data-action="order-again" data-order-id="${o.id}">Order this again?</button>
+          </div>`;
+      }
+
+      return `
+        <div class="order-card">
+          <div class="order-card-head">
+            <span class="order-card-id">Order #${o.id}</span>
+            <span class="order-card-status">${new Date(o.placed_at).toLocaleDateString()}</span>
+          </div>
+          <div class="order-card-items">${itemsSummaryHTML(o.items)}</div>
+          <div class="order-card-meta">
+            <span>${o.items.length} item${o.items.length === 1 ? '' : 's'}</span>
+            <span>$${parseFloat(o.total).toFixed(2)}</span>
+          </div>
+          ${actionsHTML}
+        </div>
+      `;
+    }).join('');
+
+    // Star picker interactivity (visual selection before submitting)
+    listEl.querySelectorAll('.order-star-picker').forEach(picker => {
+      const stars = picker.querySelectorAll('.star');
+      let selected = 0;
+      stars.forEach(star => {
+        star.addEventListener('click', () => {
+          selected = Number(star.dataset.value);
+          stars.forEach(s => s.classList.toggle('filled', Number(s.dataset.value) <= selected));
+          picker.dataset.selected = selected;
+        });
+      });
+    });
+
+    // Pay
+    listEl.querySelectorAll('[data-action="pay"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const res  = await fetch(`${API}/checkout/orders/${btn.dataset.orderId}/pay`, { method: 'POST', credentials: 'include' });
+        const json = await res.json();
+        if (!json.success) { showToast(json.message || 'Could not process payment', 'error'); return; }
+        showToast('Payment received — order is on its way!');
+        loadOrders();
+      });
+    });
+
+    // Cancel
+    listEl.querySelectorAll('[data-action="cancel"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Cancel this order?')) return;
+        const res  = await fetch(`${API}/checkout/orders/${btn.dataset.orderId}/cancel`, { method: 'POST', credentials: 'include' });
+        const json = await res.json();
+        if (!json.success) { showToast(json.message || 'Could not cancel order', 'error'); return; }
+        showToast('Order cancelled');
+        loadOrders();
+      });
+    });
+
+    // Submit review
+    listEl.querySelectorAll('[data-action="submit-review"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const picker = listEl.querySelector(`.order-star-picker[data-order-id="${btn.dataset.orderId}"]`);
+        const rating = Number(picker?.dataset.selected || 0);
+        if (!rating) { showToast('Pick a star rating first', 'error'); return; }
+
+        const res  = await fetch(`${API}/checkout/orders/${btn.dataset.orderId}/review`, {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating }),
+        });
+        const json = await res.json();
+        if (!json.success) { showToast(json.message || 'Could not submit review', 'error'); return; }
+        showToast('Thanks for your review!');
+        loadOrders();
+      });
+    });
+
+    // Order again — re-add every item from that order to the cart
+    listEl.querySelectorAll('[data-action="order-again"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const order = ordersCache.find(o => o.id === Number(btn.dataset.orderId));
+        if (!order) return;
+
+        let anyFailed = false;
+        for (const item of order.items) {
+          if (!item.product_id) continue; // product was deleted since this order
+          const res  = await fetch(`${API}/cart`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_id: item.product_id, quantity: item.quantity }),
+          });
+          const json = await res.json();
+          if (!json.success) anyFailed = true;
+        }
+
+        showToast(anyFailed ? 'Added what we could — some items are out of stock' : 'Added to your cart!');
+        document.dispatchEvent(new CustomEvent('cart:changed'));
+      });
+    });
+  }
 
   async function loadOrders() {
     const listEl = document.getElementById('ordersList');
@@ -406,23 +570,8 @@ function initAuth() {
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
 
-      if (json.data.length === 0) {
-        listEl.innerHTML = '<p class="orders-empty">No orders yet — your placed orders will show up here.</p>';
-        return;
-      }
-
-      listEl.innerHTML = json.data.map(o => `
-        <div class="order-card">
-          <div class="order-card-head">
-            <span class="order-card-id">Order #${o.id}</span>
-            <span class="order-card-status">${o.status}</span>
-          </div>
-          <div class="order-card-meta">
-            <span>${new Date(o.placed_at).toLocaleDateString()} — ${o.item_count} item${o.item_count == 1 ? '' : 's'}</span>
-            <span>$${parseFloat(o.total).toFixed(2)}</span>
-          </div>
-        </div>
-      `).join('');
+      ordersCache = json.data;
+      renderOrdersList();
     } catch (err) {
       console.error('Failed to load orders:', err);
       listEl.innerHTML = '<p class="orders-empty">Could not load your orders — try again later.</p>';
@@ -630,6 +779,9 @@ function initCheckout() {
   const checkoutCancel   = document.getElementById('checkoutCancelBtn');
   const checkoutForm     = document.getElementById('checkoutForm');
   const checkoutError    = document.getElementById('checkoutError');
+  const savedList        = document.getElementById('savedAddressesList');
+  const toggleNewBtn     = document.getElementById('toggleNewAddressForm');
+  const newFields        = document.getElementById('newAddressFields');
 
   const confirmOverlay = document.getElementById('orderConfirmOverlay');
   const confirmClose   = document.getElementById('orderConfirmClose');
@@ -637,6 +789,58 @@ function initCheckout() {
   const confirmText    = document.getElementById('orderConfirmText');
 
   if (!checkoutBtn) return;
+
+  let savedAddresses = [];
+
+  function showNewAddressFields(show) {
+    newFields.style.display = show ? 'flex' : 'none';
+    if (show) {
+      savedList.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    }
+  }
+
+  async function loadSavedAddresses() {
+    savedList.innerHTML = '';
+    try {
+      const res  = await fetch(`${API}/addresses`, { credentials: 'include' });
+      const json = await res.json();
+      savedAddresses = json.success ? json.data : [];
+
+      if (savedAddresses.length === 0) {
+        toggleNewBtn.style.display = 'none';
+        showNewAddressFields(true);
+        return;
+      }
+
+      toggleNewBtn.style.display = '';
+      showNewAddressFields(false);
+
+      savedList.innerHTML = savedAddresses.map((a, i) => `
+        <label class="saved-address-option">
+          <input type="radio" name="savedAddress" value="${a.id}" ${i === 0 ? 'checked' : ''} />
+          <span class="saved-address-text">
+            <strong>${a.full_name}</strong>
+            ${a.line1}${a.line2 ? ', ' + a.line2 : ''}, ${a.city}${a.state_province ? ', ' + a.state_province : ''} ${a.postal_code || ''}, ${a.country}
+          </span>
+          <button type="button" class="saved-address-delete" data-id="${a.id}">Remove</button>
+        </label>
+      `).join('');
+
+      savedList.querySelectorAll('.saved-address-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          await fetch(`${API}/addresses/${btn.dataset.id}`, { method: 'DELETE', credentials: 'include' });
+          loadSavedAddresses();
+        });
+      });
+    } catch (err) {
+      console.error('Failed to load saved addresses:', err);
+      toggleNewBtn.style.display = 'none';
+      showNewAddressFields(true);
+    }
+  }
+
+  toggleNewBtn.addEventListener('click', () => showNewAddressFields(true));
 
   function openCheckout() {
     checkoutError.style.display = 'none';
@@ -647,6 +851,7 @@ function initCheckout() {
     if (cartOverlay) cartOverlay.classList.remove('open');
     document.body.style.overflow = 'hidden';
     checkoutOverlay.classList.add('open');
+    loadSavedAddresses();
   }
   function closeCheckout() {
     checkoutOverlay.classList.remove('open');
@@ -669,23 +874,36 @@ function initCheckout() {
     e.preventDefault();
     checkoutError.style.display = 'none';
 
-    const address = {
-      full_name:      document.getElementById('checkoutFullName').value.trim(),
-      phone:          document.getElementById('checkoutPhone').value.trim(),
-      line1:          document.getElementById('checkoutLine1').value.trim(),
-      line2:          document.getElementById('checkoutLine2').value.trim(),
-      city:           document.getElementById('checkoutCity').value.trim(),
-      state_province: document.getElementById('checkoutState').value.trim(),
-      postal_code:    document.getElementById('checkoutPostalCode').value.trim(),
-      country:        document.getElementById('checkoutCountry').value.trim(),
-    };
+    const selectedRadio = savedList.querySelector('input[type="radio"]:checked');
+    let body;
+
+    if (selectedRadio) {
+      body = { address_id: Number(selectedRadio.value) };
+    } else {
+      const address = {
+        full_name:      document.getElementById('checkoutFullName').value.trim(),
+        phone:          document.getElementById('checkoutPhone').value.trim(),
+        line1:          document.getElementById('checkoutLine1').value.trim(),
+        line2:          document.getElementById('checkoutLine2').value.trim(),
+        city:           document.getElementById('checkoutCity').value.trim(),
+        state_province: document.getElementById('checkoutState').value.trim(),
+        postal_code:    document.getElementById('checkoutPostalCode').value.trim(),
+        country:        document.getElementById('checkoutCountry').value.trim(),
+      };
+      if (!address.full_name || !address.line1 || !address.city) {
+        checkoutError.textContent   = 'Full name, address line 1, and city are required';
+        checkoutError.style.display = 'block';
+        return;
+      }
+      body = { address };
+    }
 
     try {
       const res  = await fetch(`${API}/checkout`, {
         method:      'POST',
         credentials: 'include',
         headers:     { 'Content-Type': 'application/json' },
-        body:        JSON.stringify({ address }),
+        body:        JSON.stringify(body),
       });
       const json = await res.json();
       if (!json.success) {
