@@ -39,7 +39,7 @@ router.post('/register', async (req, res) => {
     await mergeGuestCartAndWishlist(pool, req.sessionId, user.id);
 
     issueToken(res, user);
-    res.status(201).json({ success: true, data: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    res.status(201).json({ success: true, data: { id: user.id, name: user.name, email: user.email, role: user.role, hasPaymentPin: false } });
   } catch (err) {
     console.error('POST /auth/register error:', err);
     res.status(500).json({ success: false, message: 'Failed to register' });
@@ -57,7 +57,7 @@ router.post('/login', async (req, res) => {
     }
 
     const [[user]] = await pool.query(
-      'SELECT id, name, email, password_hash, role FROM users WHERE email = ?',
+      'SELECT id, name, email, password_hash, role, payment_pin_hash FROM users WHERE email = ?',
       [email]
     );
     if (!user) {
@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
     await mergeGuestCartAndWishlist(pool, req.sessionId, user.id);
 
     issueToken(res, user);
-    res.json({ success: true, data: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    res.json({ success: true, data: { id: user.id, name: user.name, email: user.email, role: user.role, hasPaymentPin: !!user.payment_pin_hash } });
   } catch (err) {
     console.error('POST /auth/login error:', err);
     res.status(500).json({ success: false, message: 'Failed to log in' });
@@ -98,10 +98,13 @@ router.get('/me', async (req, res) => {
   }
   try {
     const [[user]] = await pool.query(
-      'SELECT id, name, email, role FROM users WHERE id = ?',
+      'SELECT id, name, email, role, payment_pin_hash FROM users WHERE id = ?',
       [req.user.id]
     );
-    res.json({ success: true, data: user || null });
+    if (!user) return res.json({ success: true, data: null });
+
+    const { payment_pin_hash, ...safeUser } = user;
+    res.json({ success: true, data: { ...safeUser, hasPaymentPin: !!payment_pin_hash } });
   } catch (err) {
     console.error('GET /auth/me error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch current user' });

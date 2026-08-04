@@ -1,5 +1,6 @@
 const express = require('express');
 const router  = express.Router();
+const bcrypt  = require('bcryptjs');
 const pool    = require('../db/pool');
 
 const FLAT_SHIPPING_FEE   = 5.00;
@@ -153,8 +154,11 @@ router.get('/orders', async (req, res) => {
 
     const orderIds = orders.map(o => o.id);
     const [items] = await pool.query(
-      `SELECT order_id, product_id, product_name, product_price, quantity
-       FROM order_items WHERE order_id IN (?)`,
+      `SELECT oi.order_id, oi.product_id, oi.product_name, oi.product_price, oi.quantity,
+              p.image_url, p.image_class
+       FROM order_items oi
+       LEFT JOIN products p ON p.id = oi.product_id
+       WHERE oi.order_id IN (?)`,
       [orderIds]
     );
 
@@ -201,12 +205,36 @@ router.get('/orders/:id', async (req, res) => {
 });
 
 /**
- * POST /api/checkout/orders/:id/pay
- * Mock payment — there's no real payment gateway wired up, so this just
- * simulates a successful payment and moves the order to "to_receive".
+ * POST /api/checkout/orders/:id/pay   { pin, confirm_pin? }
+ * Mock payment — there's no real payment gateway wired up, so this
+ * simulates a successful payment. Requires the user's 4-digit payment PIN:
+ *  - First time ever: pin + confirm_pin must match, and it gets saved as
+ *    their PIN going forward.
+ *  - Every time after: pin is checked against the saved hash.
  */
 router.post('/orders/:id/pay', async (req, res) => {
   try {
+    const { pin, confirm_pin } = req.body;
+    if (!pin || !/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits' });
+    }
+
+    const [[user]] = await pool.query('SELECT payment_pin_hash FROM users WHERE id = ?', [req.user.id]);
+
+    if (!user.payment_pin_hash) {
+      // First time paying — set this as their PIN going forward.
+      if (pin !== confirm_pin) {
+        return res.status(400).json({ success: false, message: 'PINs do not match' });
+      }
+      const pinHash = await bcrypt.hash(pin, 12);
+      await pool.query('UPDATE users SET payment_pin_hash = ? WHERE id = ?', [pinHash, req.user.id]);
+    } else {
+      const match = await bcrypt.compare(pin, user.payment_pin_hash);
+      if (!match) {
+        return res.status(401).json({ success: false, message: 'Incorrect PIN' });
+      }
+    }
+
     const [result] = await pool.query(
       `UPDATE orders SET status = 'to_receive' WHERE id = ? AND user_id = ? AND status = 'to_pay'`,
       [req.params.id, req.user.id]

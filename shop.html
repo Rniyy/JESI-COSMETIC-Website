@@ -174,19 +174,6 @@
         <button class="auth-link-btn" id="backToAccountView" style="align-self:center; margin-top:16px;">&larr; Back to account</button>
       </div>
 
-      <!-- MY ORDERS VIEW -->
-      <div class="auth-account" id="ordersView" style="display:none;">
-        <div class="orders-tabs" id="ordersTabs">
-          <button class="orders-tab-btn active" data-tab="to_pay">To Pay</button>
-          <button class="orders-tab-btn" data-tab="to_receive">To Receive</button>
-          <button class="orders-tab-btn" data-tab="to_review">To Review</button>
-          <button class="orders-tab-btn" data-tab="completed">Recent Order</button>
-          <button class="orders-tab-btn" data-tab="cancelled">Cancelled</button>
-        </div>
-        <div class="orders-list" id="ordersList"></div>
-        <button class="auth-link-btn" id="backToAccountFromOrders" style="align-self:center; margin-top:16px;">&larr; Back to account</button>
-      </div>
-
     </div>
   </aside>
 
@@ -255,6 +242,53 @@
           <button type="button" class="admin-primary-btn" id="orderConfirmOkBtn">Done</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- MY ORDERS — full page modal -->
+  <div class="admin-modal-overlay" id="ordersPageOverlay">
+    <div class="admin-modal orders-page-modal" id="ordersPageModal">
+      <div class="admin-modal-head">
+        <h2><i class="ti ti-package" aria-hidden="true"></i> Your Orders</h2>
+        <div class="orders-modal-head-actions">
+          <button class="orders-size-toggle" id="ordersSizeToggle" aria-label="Toggle size" title="Toggle size">
+            <i class="ti ti-arrows-maximize"></i>
+          </button>
+          <button class="admin-modal-close" id="ordersPageClose">&times;</button>
+        </div>
+      </div>
+      <div class="orders-tabs" id="ordersTabs">
+        <button class="orders-tab-btn active" data-tab="to_pay"><i class="ti ti-credit-card"></i> To Pay</button>
+        <button class="orders-tab-btn" data-tab="to_receive"><i class="ti ti-truck-delivery"></i> To Receive</button>
+        <button class="orders-tab-btn" data-tab="to_review"><i class="ti ti-star"></i> To Review</button>
+        <button class="orders-tab-btn" data-tab="completed"><i class="ti ti-rotate-clockwise"></i> Recent Order</button>
+        <button class="orders-tab-btn" data-tab="cancelled"><i class="ti ti-x"></i> Cancelled</button>
+      </div>
+      <div class="orders-list orders-list-wide" id="ordersList"></div>
+    </div>
+  </div>
+
+  <!-- PAYMENT PIN MODAL -->
+  <div class="admin-modal-overlay" id="paymentPinOverlay">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2 id="paymentPinTitle">Enter Payment PIN</h2>
+        <button class="admin-modal-close" id="paymentPinClose">&times;</button>
+      </div>
+      <form class="admin-modal-form" id="paymentPinForm">
+        <p class="auth-note" id="paymentPinNote">Enter your 4-digit payment PIN to confirm this payment.</p>
+        <p class="auth-error" id="paymentPinError" style="display:none;"></p>
+        <label>PIN
+          <input type="password" id="paymentPinInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" required />
+        </label>
+        <label id="paymentPinConfirmWrap" style="display:none;">Confirm PIN
+          <input type="password" id="paymentPinConfirmInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" />
+        </label>
+        <div class="admin-modal-actions">
+          <button type="button" class="admin-secondary-btn" id="paymentPinCancelBtn">Cancel</button>
+          <button type="submit" class="admin-primary-btn">Confirm</button>
+        </div>
+      </form>
     </div>
   </div>
 

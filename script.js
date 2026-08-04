@@ -348,10 +348,9 @@ function initAuth() {
   authOverlay.addEventListener('click', closeAuth);
 
   const editAccountView = document.getElementById('editAccountView');
-  const ordersView      = document.getElementById('ordersView');
 
   function showView(view) {
-    [loginForm, registerForm, forgotForm, accountView, editAccountView, ordersView].forEach(el => el.style.display = 'none');
+    [loginForm, registerForm, forgotForm, accountView, editAccountView].forEach(el => el.style.display = 'none');
     loginError.style.display    = 'none';
     registerError.style.display = 'none';
     forgotSuccess.style.display = 'none';
@@ -362,7 +361,6 @@ function initAuth() {
       forgot:      'Reset password',
       account:     'Your account',
       editAccount: 'Edit account',
-      orders:      'Your orders',
     };
     authTitle.textContent = titles[view];
 
@@ -371,7 +369,6 @@ function initAuth() {
     if (view === 'forgot')      forgotForm.style.display      = 'flex';
     if (view === 'account')     accountView.style.display     = 'flex';
     if (view === 'editAccount') editAccountView.style.display = 'flex';
-    if (view === 'orders')      ordersView.style.display       = 'flex';
   }
 
   document.getElementById('showRegisterForm').addEventListener('click', () => showView('register'));
@@ -395,11 +392,117 @@ function initAuth() {
   let ordersCache = [];
   let activeOrdersTab = 'to_pay';
 
-  document.getElementById('showOrdersView').addEventListener('click', () => {
-    showView('orders');
+  const ordersPageOverlay = document.getElementById('ordersPageOverlay');
+  const ordersPageClose   = document.getElementById('ordersPageClose');
+
+  function openOrdersPage() {
+    // Close the account panel behind it so only one overlay is visible
+    document.getElementById('authPanel').classList.remove('open');
+    document.getElementById('authOverlay').classList.remove('open');
+    document.body.style.overflow = 'hidden';
+    ordersPageOverlay.classList.add('open');
     loadOrders();
+  }
+  function closeOrdersPage() {
+    ordersPageOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('showOrdersView').addEventListener('click', openOrdersPage);
+  ordersPageClose.addEventListener('click', closeOrdersPage);
+  ordersPageOverlay.addEventListener('click', (e) => { if (e.target === ordersPageOverlay) closeOrdersPage(); });
+
+  const ordersPageModal  = document.getElementById('ordersPageModal');
+  const ordersSizeToggle = document.getElementById('ordersSizeToggle');
+  ordersSizeToggle.addEventListener('click', () => {
+    const expanded = ordersPageModal.classList.toggle('expanded');
+    ordersSizeToggle.innerHTML = expanded
+      ? '<i class="ti ti-arrows-minimize"></i>'
+      : '<i class="ti ti-arrows-maximize"></i>';
+    ordersSizeToggle.title = expanded ? 'Shrink' : 'Expand';
   });
-  document.getElementById('backToAccountFromOrders').addEventListener('click', () => showView('account'));
+
+  // ── Payment PIN modal ──
+  const paymentPinOverlay      = document.getElementById('paymentPinOverlay');
+  const paymentPinClose        = document.getElementById('paymentPinClose');
+  const paymentPinCancelBtn    = document.getElementById('paymentPinCancelBtn');
+  const paymentPinForm         = document.getElementById('paymentPinForm');
+  const paymentPinTitle        = document.getElementById('paymentPinTitle');
+  const paymentPinNote         = document.getElementById('paymentPinNote');
+  const paymentPinError        = document.getElementById('paymentPinError');
+  const paymentPinInput        = document.getElementById('paymentPinInput');
+  const paymentPinConfirmWrap  = document.getElementById('paymentPinConfirmWrap');
+  const paymentPinConfirmInput = document.getElementById('paymentPinConfirmInput');
+  let payingOrderId = null;
+
+  function openPaymentPinModal(orderId) {
+    payingOrderId = orderId;
+    paymentPinError.style.display = 'none';
+    paymentPinForm.reset();
+
+    const isFirstTime = !(window.currentUser && window.currentUser.hasPaymentPin);
+    if (isFirstTime) {
+      paymentPinTitle.textContent = 'Create Your Payment PIN';
+      paymentPinNote.textContent  = 'Choose a 4-digit PIN. You\'ll use this same PIN for every future payment.';
+      paymentPinConfirmWrap.style.display = 'block';
+      paymentPinConfirmInput.required = true;
+    } else {
+      paymentPinTitle.textContent = 'Enter Payment PIN';
+      paymentPinNote.textContent  = 'Enter your 4-digit payment PIN to confirm this payment.';
+      paymentPinConfirmWrap.style.display = 'none';
+      paymentPinConfirmInput.required = false;
+    }
+
+    paymentPinOverlay.classList.add('open');
+    paymentPinInput.focus();
+  }
+  function closePaymentPinModal() {
+    paymentPinOverlay.classList.remove('open');
+    payingOrderId = null;
+  }
+
+  paymentPinClose.addEventListener('click', closePaymentPinModal);
+  paymentPinCancelBtn.addEventListener('click', closePaymentPinModal);
+  paymentPinOverlay.addEventListener('click', (e) => { if (e.target === paymentPinOverlay) closePaymentPinModal(); });
+
+  paymentPinForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    paymentPinError.style.display = 'none';
+
+    const pin = paymentPinInput.value.trim();
+    const confirmPin = paymentPinConfirmInput.value.trim();
+
+    if (!/^\d{4}$/.test(pin)) {
+      paymentPinError.textContent   = 'PIN must be exactly 4 digits';
+      paymentPinError.style.display = 'block';
+      return;
+    }
+
+    try {
+      const res  = await fetch(`${API}/checkout/orders/${payingOrderId}/pay`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin, confirm_pin: confirmPin }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        paymentPinError.textContent   = json.message || 'Could not process payment';
+        paymentPinError.style.display = 'block';
+        return;
+      }
+
+      // A PIN now exists either way (just set, or already existed)
+      if (window.currentUser) window.currentUser.hasPaymentPin = true;
+
+      closePaymentPinModal();
+      showToast('Payment received — order is on its way!');
+      loadOrders();
+    } catch (err) {
+      paymentPinError.textContent   = 'Something went wrong — try again';
+      paymentPinError.style.display = 'block';
+      console.error(err);
+    }
+  });
 
   document.querySelectorAll('.orders-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -419,7 +522,15 @@ function initAuth() {
   };
 
   function itemsSummaryHTML(items) {
-    return items.map(i => `${i.product_name} × ${i.quantity}`).join('<br>');
+    return items.map(i => `
+      <div class="order-item-row">
+        ${i.image_url
+          ? `<img class="order-item-thumb" src="${i.image_url}" alt="${i.product_name}">`
+          : `<div class="order-item-thumb-placeholder"></div>`}
+        <span class="order-item-name">${i.product_name} × ${i.quantity}</span>
+        <span class="order-item-price">$${(Number(i.product_price) * i.quantity).toFixed(2)}</span>
+      </div>
+    `).join('');
   }
 
   function starPickerHTML(orderId) {
@@ -468,7 +579,7 @@ function initAuth() {
       }
 
       return `
-        <div class="order-card">
+        <div class="order-card status-${o.status}">
           <div class="order-card-head">
             <span class="order-card-id">Order #${o.id}</span>
             <span class="order-card-status">${new Date(o.placed_at).toLocaleDateString()}</span>
@@ -498,13 +609,7 @@ function initAuth() {
 
     // Pay
     listEl.querySelectorAll('[data-action="pay"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const res  = await fetch(`${API}/checkout/orders/${btn.dataset.orderId}/pay`, { method: 'POST', credentials: 'include' });
-        const json = await res.json();
-        if (!json.success) { showToast(json.message || 'Could not process payment', 'error'); return; }
-        showToast('Payment received — order is on its way!');
-        loadOrders();
-      });
+      btn.addEventListener('click', () => openPaymentPinModal(btn.dataset.orderId));
     });
 
     // Cancel
