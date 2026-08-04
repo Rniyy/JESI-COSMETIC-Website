@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard — JESI-COSMETIC</title>
   <link rel="stylesheet" href="admin.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -14,6 +15,7 @@
     <aside class="admin-sidebar">
       <div class="admin-brand">JESI-COSMETIC <span>Admin</span></div>
       <nav class="admin-nav">
+        <button class="admin-nav-btn" data-view="analytics">Analytics</button>
         <button class="admin-nav-btn active" data-view="products">Products</button>
         <button class="admin-nav-btn" data-view="orders">Orders</button>
         <button class="admin-nav-btn" data-view="users">Users</button>
@@ -33,6 +35,44 @@
       </div>
 
       <div class="admin-content" id="adminContent" style="display:none;">
+
+        <!-- ANALYTICS VIEW -->
+        <section class="admin-view" id="view-analytics" style="display:none;">
+          <div class="admin-view-head">
+            <h1>Analytics</h1>
+            <select id="analyticsYearSelect" class="admin-filter-input"></select>
+          </div>
+
+          <div class="analytics-summary-row" id="analyticsSummaryRow"></div>
+
+          <div class="analytics-charts-row">
+            <div class="analytics-chart-card">
+              <h3>Revenue by Month</h3>
+              <canvas id="revenueChart" height="220"></canvas>
+            </div>
+            <div class="analytics-chart-card">
+              <h3>Units Sold by Month</h3>
+              <canvas id="unitsChart" height="220"></canvas>
+            </div>
+          </div>
+
+          <div class="analytics-top-products">
+            <h3>Top Selling Products</h3>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th>Units Sold</th>
+                    <th>Revenue</th>
+                  </tr>
+                </thead>
+                <tbody id="topProductsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
         <!-- PRODUCTS VIEW -->
         <section class="admin-view" id="view-products">
@@ -62,6 +102,20 @@
         <section class="admin-view" id="view-orders" style="display:none;">
           <div class="admin-view-head">
             <h1>Orders</h1>
+          </div>
+          <div class="admin-filters-bar">
+            <input type="text" id="orderSearchInput" class="admin-filter-input" placeholder="Search customer, email, or product…" />
+            <input type="date" id="orderDateFrom" class="admin-filter-input" title="From date" />
+            <input type="date" id="orderDateTo" class="admin-filter-input" title="To date" />
+            <select id="orderStatusFilter" class="admin-filter-input">
+              <option value="">All statuses</option>
+              <option value="to_pay">To Pay</option>
+              <option value="to_receive">To Receive</option>
+              <option value="to_review">To Review</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button class="admin-secondary-btn" id="orderFiltersClearBtn">Clear</button>
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">

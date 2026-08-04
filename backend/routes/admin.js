@@ -187,18 +187,52 @@ router.delete('/users/:id', async (req, res) => {
 /**
  * GET /api/admin/orders
  */
+/**
+ * GET /api/admin/orders
+ * Query params (all optional, combine with AND):
+ *   q          - matches customer name, customer email, OR any product name in the order
+ *   date_from  - orders placed on/after this date (YYYY-MM-DD)
+ *   date_to    - orders placed on/before this date (YYYY-MM-DD)
+ *   status     - exact status match
+ */
 router.get('/orders', async (req, res) => {
   try {
-    const [orders] = await pool.query(
-      `SELECT o.id, o.status, o.subtotal, o.shipping_fee, o.total, o.placed_at,
-              u.name AS customer_name, u.email AS customer_email,
-              COUNT(oi.id) AS item_count
-       FROM orders o
-       JOIN users u ON u.id = o.user_id
-       LEFT JOIN order_items oi ON oi.order_id = o.id
-       GROUP BY o.id
-       ORDER BY o.placed_at DESC`
-    );
+    const { q, date_from, date_to, status } = req.query;
+
+    let sql = `
+      SELECT o.id, o.status, o.subtotal, o.shipping_fee, o.total, o.placed_at,
+             u.name AS customer_name, u.email AS customer_email,
+             COUNT(oi.id) AS item_count
+      FROM orders o
+      JOIN users u ON u.id = o.user_id
+      LEFT JOIN order_items oi ON oi.order_id = o.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (q) {
+      sql += ` AND (
+        u.name LIKE ? OR u.email LIKE ?
+        OR EXISTS (SELECT 1 FROM order_items oi2 WHERE oi2.order_id = o.id AND oi2.product_name LIKE ?)
+      )`;
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    }
+    if (date_from) {
+      sql += ' AND DATE(o.placed_at) >= ?';
+      params.push(date_from);
+    }
+    if (date_to) {
+      sql += ' AND DATE(o.placed_at) <= ?';
+      params.push(date_to);
+    }
+    if (status) {
+      sql += ' AND o.status = ?';
+      params.push(status);
+    }
+
+    sql += ' GROUP BY o.id ORDER BY o.placed_at DESC';
+
+    const [orders] = await pool.query(sql, params);
     res.json({ success: true, data: orders });
   } catch (err) {
     console.error('GET /admin/orders error:', err);
@@ -257,6 +291,126 @@ router.patch('/orders/:id/status', async (req, res) => {
   } catch (err) {
     console.error('PATCH /admin/orders/:id/status error:', err);
     res.status(500).json({ success: false, message: 'Failed to update order status' });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   ANALYTICS
+   "Sold" = orders that were actually paid for (to_receive, to_review,
+   or completed) — to_pay orders haven't been paid yet, and cancelled
+   orders were never fulfilled, so neither counts toward sales.
+═══════════════════════════════════════════════════════════ */
+const SOLD_STATUSES = "('to_receive', 'to_review', 'completed')";
+
+/**
+ * GET /api/admin/analytics/years
+ * Every year that has at least one order — used to populate the year picker.
+ */
+router.get('/analytics/years', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT DISTINCT YEAR(placed_at) AS year FROM orders ORDER BY year DESC`
+    );
+    const years = rows.map(r => r.year);
+    const currentYear = new Date().getFullYear();
+    if (!years.includes(currentYear)) years.unshift(currentYear); // always offer the current year
+    res.json({ success: true, data: years });
+  } catch (err) {
+    console.error('GET /admin/analytics/years error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch years' });
+  }
+});
+
+/**
+ * GET /api/admin/analytics/summary?year=2026
+ * Totals for the given year, plus the same totals for the year before it
+ * (so the frontend can show a "+12% vs last year" style comparison).
+ */
+router.get('/analytics/summary', async (req, res) => {
+  try {
+    const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+
+    async function totalsFor(y) {
+      const [[row]] = await pool.query(
+        `SELECT COALESCE(SUM(oi.product_price * oi.quantity), 0) AS revenue,
+                COALESCE(SUM(oi.quantity), 0) AS items_sold,
+                COUNT(DISTINCT o.id) AS order_count
+         FROM orders o
+         JOIN order_items oi ON oi.order_id = o.id
+         WHERE YEAR(o.placed_at) = ? AND o.status IN ${SOLD_STATUSES}`,
+        [y]
+      );
+      return row;
+    }
+
+    const [current, previous] = await Promise.all([totalsFor(year), totalsFor(year - 1)]);
+    res.json({ success: true, data: { year, current, previous } });
+  } catch (err) {
+    console.error('GET /admin/analytics/summary error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch summary' });
+  }
+});
+
+/**
+ * GET /api/admin/analytics/monthly?year=2026
+ * Revenue + units sold + order count for each of the 12 months (zero-filled
+ * for months with no sales, since GROUP BY silently skips those).
+ */
+router.get('/analytics/monthly', async (req, res) => {
+  try {
+    const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+
+    const [rows] = await pool.query(
+      `SELECT MONTH(o.placed_at) AS month,
+              COALESCE(SUM(oi.product_price * oi.quantity), 0) AS revenue,
+              COALESCE(SUM(oi.quantity), 0) AS items_sold,
+              COUNT(DISTINCT o.id) AS order_count
+       FROM orders o
+       JOIN order_items oi ON oi.order_id = o.id
+       WHERE YEAR(o.placed_at) = ? AND o.status IN ${SOLD_STATUSES}
+       GROUP BY MONTH(o.placed_at)`,
+      [year]
+    );
+
+    const byMonth = {};
+    rows.forEach(r => { byMonth[r.month] = r; });
+
+    const months = [];
+    for (let m = 1; m <= 12; m++) {
+      months.push(byMonth[m] || { month: m, revenue: 0, items_sold: 0, order_count: 0 });
+    }
+
+    res.json({ success: true, data: months });
+  } catch (err) {
+    console.error('GET /admin/analytics/monthly error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch monthly analytics' });
+  }
+});
+
+/**
+ * GET /api/admin/analytics/top-products?year=2026&limit=5
+ */
+router.get('/analytics/top-products', async (req, res) => {
+  try {
+    const year  = parseInt(req.query.year, 10) || new Date().getFullYear();
+    const limit = Math.min(parseInt(req.query.limit, 10) || 5, 20);
+
+    const [rows] = await pool.query(
+      `SELECT oi.product_id, oi.product_name AS name,
+              SUM(oi.quantity) AS units_sold,
+              SUM(oi.product_price * oi.quantity) AS revenue
+       FROM order_items oi
+       JOIN orders o ON o.id = oi.order_id
+       WHERE YEAR(o.placed_at) = ? AND o.status IN ${SOLD_STATUSES}
+       GROUP BY oi.product_id, oi.product_name
+       ORDER BY units_sold DESC
+       LIMIT ?`,
+      [year, limit]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('GET /admin/analytics/top-products error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch top products' });
   }
 });
 

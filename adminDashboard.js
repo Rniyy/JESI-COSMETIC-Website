@@ -4,6 +4,8 @@ let allProducts = [];
 let allOrders    = [];
 let allUsers     = [];
 let currentAdminId = null;
+let revenueChartInstance = null;
+let unitsChartInstance   = null;
 
 /* ─────────────────────────────────────────────────────────
    ACCESS GATE — redirect anyone who isn't an admin
@@ -33,14 +35,166 @@ async function checkAdminAccess() {
 /* ─────────────────────────────────────────────────────────
    NAV — switch between Products / Users views
 ───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   ANALYTICS
+───────────────────────────────────────────────────────── */
+const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function formatMoney(n) {
+  return `$${Number(n).toFixed(2)}`;
+}
+
+function deltaHTML(current, previous, formatter = (n) => n) {
+  if (previous === 0 && current === 0) {
+    return `<div class="analytics-summary-delta flat">No data last year</div>`;
+  }
+  if (previous === 0) {
+    return `<div class="analytics-summary-delta up">▲ New this year</div>`;
+  }
+  const pct = ((current - previous) / previous) * 100;
+  const cls = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+  const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '—';
+  return `<div class="analytics-summary-delta ${cls}">${arrow} ${Math.abs(pct).toFixed(0)}% vs ${formatter}</div>`;
+}
+
+async function loadAnalyticsYears() {
+  const select = document.getElementById('analyticsYearSelect');
+  try {
+    const res  = await fetch(`${API}/admin/analytics/years`, { credentials: 'include' });
+    const json = await res.json();
+    const years = json.success ? json.data : [new Date().getFullYear()];
+
+    select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    select.value = years[0];
+  } catch (err) {
+    console.error('Failed to load years:', err);
+  }
+}
+
+async function loadAnalyticsData(year) {
+  try {
+    const [summaryRes, monthlyRes, topRes] = await Promise.all([
+      fetch(`${API}/admin/analytics/summary?year=${year}`, { credentials: 'include' }),
+      fetch(`${API}/admin/analytics/monthly?year=${year}`, { credentials: 'include' }),
+      fetch(`${API}/admin/analytics/top-products?year=${year}&limit=5`, { credentials: 'include' }),
+    ]);
+    const summary  = await summaryRes.json();
+    const monthly  = await monthlyRes.json();
+    const topItems = await topRes.json();
+
+    if (summary.success)  renderSummaryCards(summary.data);
+    if (monthly.success)  renderCharts(monthly.data);
+    if (topItems.success) renderTopProducts(topItems.data);
+  } catch (err) {
+    console.error('Failed to load analytics:', err);
+  }
+}
+
+function renderSummaryCards(data) {
+  const { current, previous } = data;
+  const row = document.getElementById('analyticsSummaryRow');
+  const avgOrder = current.order_count > 0 ? current.revenue / current.order_count : 0;
+  const avgOrderPrev = previous.order_count > 0 ? previous.revenue / previous.order_count : 0;
+
+  row.innerHTML = `
+    <div class="analytics-summary-card">
+      <div class="analytics-summary-label">Revenue</div>
+      <div class="analytics-summary-value">${formatMoney(current.revenue)}</div>
+      ${deltaHTML(Number(current.revenue), Number(previous.revenue), 'last year')}
+    </div>
+    <div class="analytics-summary-card">
+      <div class="analytics-summary-label">Units Sold</div>
+      <div class="analytics-summary-value">${current.items_sold}</div>
+      ${deltaHTML(Number(current.items_sold), Number(previous.items_sold), 'last year')}
+    </div>
+    <div class="analytics-summary-card">
+      <div class="analytics-summary-label">Orders</div>
+      <div class="analytics-summary-value">${current.order_count}</div>
+      ${deltaHTML(Number(current.order_count), Number(previous.order_count), 'last year')}
+    </div>
+    <div class="analytics-summary-card">
+      <div class="analytics-summary-label">Avg. Order Value</div>
+      <div class="analytics-summary-value">${formatMoney(avgOrder)}</div>
+      ${deltaHTML(avgOrder, avgOrderPrev, 'last year')}
+    </div>
+  `;
+}
+
+function renderCharts(monthlyData) {
+  const revenueCtx = document.getElementById('revenueChart');
+  const unitsCtx    = document.getElementById('unitsChart');
+
+  if (revenueChartInstance) revenueChartInstance.destroy();
+  if (unitsChartInstance)   unitsChartInstance.destroy();
+
+  const labels  = monthlyData.map(m => MONTH_LABELS[m.month - 1]);
+  const revenue = monthlyData.map(m => Number(m.revenue));
+  const units   = monthlyData.map(m => Number(m.items_sold));
+
+  revenueChartInstance = new Chart(revenueCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Revenue ($)', data: revenue, backgroundColor: '#dda297', borderRadius: 5 }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { callback: (v) => '$' + v } } },
+    },
+  });
+
+  unitsChartInstance = new Chart(unitsCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Units Sold', data: units, backgroundColor: '#7fa8c9', borderRadius: 5 }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+    },
+  });
+}
+
+function renderTopProducts(products) {
+  const tbody = document.getElementById('topProductsTableBody');
+  if (products.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#a08e88; padding:24px;">No sales yet this year.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = products.map((p, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${p.name}</td>
+      <td>${p.units_sold}</td>
+      <td>${formatMoney(p.revenue)}</td>
+    </tr>
+  `).join('');
+}
+
+async function initAnalytics() {
+  await loadAnalyticsYears();
+  const select = document.getElementById('analyticsYearSelect');
+  loadAnalyticsData(select.value);
+  select.addEventListener('change', () => loadAnalyticsData(select.value));
+}
+
 function initNav() {
   const navBtns = document.querySelectorAll('.admin-nav-btn');
+  let analyticsLoaded = false;
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       navBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.admin-view').forEach(v => v.style.display = 'none');
       document.getElementById(`view-${btn.dataset.view}`).style.display = 'block';
+
+      if (btn.dataset.view === 'analytics' && !analyticsLoaded) {
+        analyticsLoaded = true;
+        initAnalytics();
+      }
     });
   });
 
@@ -219,7 +373,18 @@ function initProductModal() {
 ───────────────────────────────────────────────────────── */
 async function loadOrders() {
   try {
-    const res  = await fetch(`${API}/admin/orders`, { credentials: 'include' });
+    const q         = document.getElementById('orderSearchInput')?.value.trim();
+    const dateFrom  = document.getElementById('orderDateFrom')?.value;
+    const dateTo    = document.getElementById('orderDateTo')?.value;
+    const status    = document.getElementById('orderStatusFilter')?.value;
+
+    const params = new URLSearchParams();
+    if (q)        params.set('q', q);
+    if (dateFrom) params.set('date_from', dateFrom);
+    if (dateTo)   params.set('date_to', dateTo);
+    if (status)   params.set('status', status);
+
+    const res  = await fetch(`${API}/admin/orders?${params.toString()}`, { credentials: 'include' });
     const json = await res.json();
     if (!json.success) throw new Error(json.message);
     allOrders = json.data;
@@ -227,6 +392,30 @@ async function loadOrders() {
   } catch (err) {
     console.error('Failed to load orders:', err);
   }
+}
+
+function initOrderFilters() {
+  const searchInput = document.getElementById('orderSearchInput');
+  const dateFrom     = document.getElementById('orderDateFrom');
+  const dateTo       = document.getElementById('orderDateTo');
+  const statusFilter = document.getElementById('orderStatusFilter');
+  const clearBtn      = document.getElementById('orderFiltersClearBtn');
+
+  let debounceTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(loadOrders, 300);
+  });
+  [dateFrom, dateTo, statusFilter].forEach(el => {
+    el.addEventListener('change', loadOrders);
+  });
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    dateFrom.value = '';
+    dateTo.value = '';
+    statusFilter.value = '';
+    loadOrders();
+  });
 }
 
 const STATUS_LABELS = {
@@ -445,6 +634,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initNav();
   initProductModal();
   initOrderModal();
+  initOrderFilters();
   loadProducts();
   loadOrders();
   loadUsers();

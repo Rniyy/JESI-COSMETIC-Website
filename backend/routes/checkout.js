@@ -7,6 +7,22 @@ const FLAT_SHIPPING_FEE   = 5.00;
 const FREE_SHIPPING_ABOVE = 50.00;
 
 /**
+ * review_count is stored as text so seeded values like "1.2k" round-trip
+ * untouched — but that means we can't just do `review_count + 1` in SQL.
+ * This parses whatever's there into a plain number so we can increment it.
+ */
+function parseReviewCount(value) {
+  if (!value) return 0;
+  const str = String(value).trim().toLowerCase();
+  if (str.endsWith('k')) {
+    const num = parseFloat(str.slice(0, -1));
+    return isNaN(num) ? 0 : Math.round(num * 1000);
+  }
+  const num = parseInt(str.replace(/,/g, ''), 10);
+  return isNaN(num) ? 0 : num;
+}
+
+/**
  * POST /api/checkout
  * Body: EITHER { address_id: 5 } to reuse a saved address,
  *       OR     { address: { full_name, phone, line1, line2, city, state_province, postal_code, country } }
@@ -296,26 +312,50 @@ router.post('/orders/:id/cancel', async (req, res) => {
 
 /**
  * POST /api/checkout/orders/:id/review   { rating: 1-5 }
- * Only allowed while "to_review". One star rating per order (not per item).
+ * Only allowed while "to_review". One star rating per order (not per item),
+ * but every distinct product in the order gets its review_count bumped by 1.
  */
 router.post('/orders/:id/review', async (req, res) => {
+  const conn = await pool.getConnection();
   try {
     const rating = parseInt(req.body.rating, 10);
     if (!rating || rating < 1 || rating > 5) {
+      conn.release();
       return res.status(400).json({ success: false, message: 'rating must be between 1 and 5' });
     }
 
-    const [result] = await pool.query(
+    await conn.beginTransaction();
+
+    const [result] = await conn.query(
       `UPDATE orders SET status = 'completed', rating = ? WHERE id = ? AND user_id = ? AND status = 'to_review'`,
       [rating, req.params.id, req.user.id]
     );
     if (result.affectedRows === 0) {
+      await conn.rollback();
+      conn.release();
       return res.status(400).json({ success: false, message: 'This order is not ready to be reviewed' });
     }
+
+    // Bump review_count once per distinct product in this order (not per unit ordered)
+    const [items] = await conn.query(
+      'SELECT DISTINCT product_id FROM order_items WHERE order_id = ? AND product_id IS NOT NULL',
+      [req.params.id]
+    );
+    for (const item of items) {
+      const [[product]] = await conn.query('SELECT review_count FROM products WHERE id = ?', [item.product_id]);
+      if (!product) continue; // product was deleted since this order was placed
+      const newCount = parseReviewCount(product.review_count) + 1;
+      await conn.query('UPDATE products SET review_count = ? WHERE id = ?', [String(newCount), item.product_id]);
+    }
+
+    await conn.commit();
     res.json({ success: true });
   } catch (err) {
+    await conn.rollback();
     console.error('POST /checkout/orders/:id/review error:', err);
     res.status(500).json({ success: false, message: 'Failed to submit review' });
+  } finally {
+    conn.release();
   }
 });
 

@@ -20,13 +20,15 @@ function buildProductCardHTML(p) {
     ? ` <s class="prod-old">$${parseFloat(p.old_price).toFixed(0)}</s>`
     : '';
   const ratingText = p.rating ? `${parseFloat(p.rating).toFixed(1)} (${p.review_count || 0})` : '';
+  const outOfStock = !p.in_stock || p.stock_quantity <= 0;
 
   return `
-    <div class="product-card" data-category="${p.category}" data-name="${p.name}" data-price="${p.price}" data-product-id="${p.id}">
+    <div class="product-card ${outOfStock ? 'out-of-stock' : ''}" data-category="${p.category}" data-name="${p.name}" data-price="${p.price}" data-product-id="${p.id}">
       <div class="product-img ${p.image_class || ''}">
         ${p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : ''}
         <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         ${badgeHTML}
+        ${outOfStock ? `<div class="out-of-stock-overlay"><span>Out of Stock</span></div>` : ''}
       </div>
       <div class="product-info">
         <span class="prod-brand">${p.brand || 'Medicube'}</span>
@@ -37,7 +39,7 @@ function buildProductCardHTML(p) {
         </div>
         <div class="prod-bottom">
           <span class="prod-price">$${parseFloat(p.price).toFixed(0)}${oldPriceHTML}</span>
-          <button class="add-cart" aria-label="Add to cart"><i class="ti ti-shopping-bag-plus"></i></button>
+          <button class="add-cart" aria-label="Add to cart" ${outOfStock ? 'disabled' : ''}><i class="ti ti-shopping-bag-plus"></i></button>
         </div>
       </div>
     </div>
@@ -242,6 +244,10 @@ function initCart() {
 
       const card = btn.closest('[data-name]');
       if (!card) return;
+      if (card.classList.contains('out-of-stock')) {
+        showToast('This product is out of stock', 'error');
+        return;
+      }
 
       const productName = card.dataset.name;
 
@@ -1401,6 +1407,18 @@ function initQuickView() {
       badge.classList.add('qv-badge');
       qvImg.appendChild(badge);
     }
+
+    const outOfStock = card.classList.contains('out-of-stock');
+    qvImg.querySelector('.qv-out-of-stock-overlay')?.remove();
+    if (outOfStock) {
+      const overlay = document.createElement('div');
+      overlay.className = 'out-of-stock-overlay qv-out-of-stock-overlay';
+      overlay.innerHTML = '<span>Out of Stock</span>';
+      qvImg.appendChild(overlay);
+    }
+    qvAddCart.disabled = outOfStock;
+    qvAddCart.style.opacity = outOfStock ? '0.5' : '';
+    qvAddCart.style.cursor = outOfStock ? 'not-allowed' : '';
 
     qvWish.classList.toggle('wished', !!wished);
 

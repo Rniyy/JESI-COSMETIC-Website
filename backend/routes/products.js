@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     const { q, category, limit } = req.query;
     const cap = Math.min(parseInt(limit, 10) || 100, 200);
 
-    let sql = 'SELECT * FROM products WHERE in_stock = 1';
+    let sql = 'SELECT * FROM products WHERE 1=1';
     const params = [];
 
     if (q) {
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
       params.push(category);
     }
 
-    sql += ' ORDER BY name ASC LIMIT ?';
+    sql += ' ORDER BY in_stock DESC, name ASC LIMIT ?';
     params.push(cap);
 
     const [rows] = await pool.query(sql, params);
