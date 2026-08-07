@@ -414,4 +414,52 @@ router.get('/analytics/top-products', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/admin/analytics/by-category?year=2026
+ * Revenue split by product category — for a donut chart.
+ */
+router.get('/analytics/by-category', async (req, res) => {
+  try {
+    const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+    const [rows] = await pool.query(
+      `SELECT COALESCE(p.category, 'Other') AS category,
+              SUM(oi.product_price * oi.quantity) AS revenue
+       FROM order_items oi
+       JOIN orders o ON o.id = oi.order_id
+       LEFT JOIN products p ON p.id = oi.product_id
+       WHERE YEAR(o.placed_at) = ? AND o.status IN ${SOLD_STATUSES}
+       GROUP BY COALESCE(p.category, 'Other')
+       ORDER BY revenue DESC`,
+      [year]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('GET /admin/analytics/by-category error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch category breakdown' });
+  }
+});
+
+/**
+ * GET /api/admin/analytics/by-status?year=2026
+ * Order count per lifecycle status — for a donut chart. Unlike the sales
+ * totals above, this intentionally includes every status (to_pay,
+ * cancelled, etc.) since it's showing lifecycle distribution, not revenue.
+ */
+router.get('/analytics/by-status', async (req, res) => {
+  try {
+    const year = parseInt(req.query.year, 10) || new Date().getFullYear();
+    const [rows] = await pool.query(
+      `SELECT status, COUNT(*) AS count
+       FROM orders
+       WHERE YEAR(placed_at) = ?
+       GROUP BY status`,
+      [year]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('GET /admin/analytics/by-status error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch status breakdown' });
+  }
+});
+
 module.exports = router;

@@ -5,7 +5,8 @@ let allOrders    = [];
 let allUsers     = [];
 let currentAdminId = null;
 let revenueChartInstance = null;
-let unitsChartInstance   = null;
+let categoryChartInstance = null;
+let statusChartInstance   = null;
 
 /* ─────────────────────────────────────────────────────────
    ACCESS GATE — redirect anyone who isn't an admin
@@ -39,22 +40,31 @@ async function checkAdminAccess() {
    ANALYTICS
 ───────────────────────────────────────────────────────── */
 const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CHART_COLORS = ['#dda297', '#7fa8c9', '#d9b34c', '#6fae8a', '#b090c9', '#e08a8a', '#8bb8b0', '#c9a877'];
+const STATUS_COLORS = {
+  to_pay: '#dda297', to_receive: '#7fa8c9', to_review: '#d9b34c',
+  completed: '#6fae8a', cancelled: '#b8afa8',
+};
+const STATUS_LABELS_FULL = {
+  to_pay: 'To Pay', to_receive: 'To Receive', to_review: 'To Review',
+  completed: 'Completed', cancelled: 'Cancelled',
+};
 
 function formatMoney(n) {
   return `$${Number(n).toFixed(2)}`;
 }
 
-function deltaHTML(current, previous, formatter = (n) => n) {
+function deltaBadgeHTML(current, previous) {
   if (previous === 0 && current === 0) {
-    return `<div class="analytics-summary-delta flat">No data last year</div>`;
+    return `<span class="analytics-stat-delta flat">— no data</span>`;
   }
   if (previous === 0) {
-    return `<div class="analytics-summary-delta up">▲ New this year</div>`;
+    return `<span class="analytics-stat-delta up">▲ New</span>`;
   }
   const pct = ((current - previous) / previous) * 100;
   const cls = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
   const arrow = pct > 0 ? '▲' : pct < 0 ? '▼' : '—';
-  return `<div class="analytics-summary-delta ${cls}">${arrow} ${Math.abs(pct).toFixed(0)}% vs ${formatter}</div>`;
+  return `<span class="analytics-stat-delta ${cls}">${arrow} ${Math.abs(pct).toFixed(0)}%</span>`;
 }
 
 async function loadAnalyticsYears() {
@@ -63,7 +73,6 @@ async function loadAnalyticsYears() {
     const res  = await fetch(`${API}/admin/analytics/years`, { credentials: 'include' });
     const json = await res.json();
     const years = json.success ? json.data : [new Date().getFullYear()];
-
     select.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
     select.value = years[0];
   } catch (err) {
@@ -73,104 +82,170 @@ async function loadAnalyticsYears() {
 
 async function loadAnalyticsData(year) {
   try {
-    const [summaryRes, monthlyRes, topRes] = await Promise.all([
+    const [summaryRes, monthlyRes, topRes, categoryRes, statusRes] = await Promise.all([
       fetch(`${API}/admin/analytics/summary?year=${year}`, { credentials: 'include' }),
       fetch(`${API}/admin/analytics/monthly?year=${year}`, { credentials: 'include' }),
       fetch(`${API}/admin/analytics/top-products?year=${year}&limit=5`, { credentials: 'include' }),
+      fetch(`${API}/admin/analytics/by-category?year=${year}`, { credentials: 'include' }),
+      fetch(`${API}/admin/analytics/by-status?year=${year}`, { credentials: 'include' }),
     ]);
     const summary  = await summaryRes.json();
     const monthly  = await monthlyRes.json();
     const topItems = await topRes.json();
+    const category = await categoryRes.json();
+    const status   = await statusRes.json();
 
-    if (summary.success)  renderSummaryCards(summary.data);
-    if (monthly.success)  renderCharts(monthly.data);
-    if (topItems.success) renderTopProducts(topItems.data);
+    if (summary.success) {
+      try { renderStatCards(summary.data); renderMiniStats(summary.data); }
+      catch (e) { console.error('renderStatCards/renderMiniStats failed:', e); }
+    }
+    if (monthly.success) {
+      try { renderTrendChart(monthly.data); }
+      catch (e) { console.error('renderTrendChart failed (is Chart.js loaded?):', e); }
+    }
+    if (topItems.success) {
+      try { renderTopProductsList(topItems.data); }
+      catch (e) { console.error('renderTopProductsList failed:', e); }
+    }
+    if (category.success) {
+      try { renderDonut('categoryChart', 'categoryLegend', category.data, 'category', 'revenue', formatMoney); }
+      catch (e) { console.error('renderDonut (category) failed (is Chart.js loaded?):', e); }
+    }
+    if (status.success) {
+      try { renderDonut('statusChart', 'statusLegend', status.data, 'status', 'count', (n) => n, STATUS_LABELS_FULL, STATUS_COLORS); }
+      catch (e) { console.error('renderDonut (status) failed (is Chart.js loaded?):', e); }
+    }
   } catch (err) {
     console.error('Failed to load analytics:', err);
   }
 }
 
-function renderSummaryCards(data) {
+function renderStatCards(data) {
   const { current, previous } = data;
   const row = document.getElementById('analyticsSummaryRow');
   const avgOrder = current.order_count > 0 ? current.revenue / current.order_count : 0;
   const avgOrderPrev = previous.order_count > 0 ? previous.revenue / previous.order_count : 0;
 
-  row.innerHTML = `
-    <div class="analytics-summary-card">
-      <div class="analytics-summary-label">Revenue</div>
-      <div class="analytics-summary-value">${formatMoney(current.revenue)}</div>
-      ${deltaHTML(Number(current.revenue), Number(previous.revenue), 'last year')}
+  const cards = [
+    { label: 'Revenue', value: formatMoney(current.revenue), cur: Number(current.revenue), prev: Number(previous.revenue) },
+    { label: 'Orders', value: current.order_count, cur: Number(current.order_count), prev: Number(previous.order_count) },
+    { label: 'Units Sold', value: current.items_sold, cur: Number(current.items_sold), prev: Number(previous.items_sold) },
+    { label: 'Avg. Order', value: formatMoney(avgOrder), cur: avgOrder, prev: avgOrderPrev },
+  ];
+
+  row.innerHTML = cards.map(c => `
+    <div class="analytics-stat-card">
+      <div class="analytics-stat-label">${c.label}</div>
+      <div class="analytics-stat-value">${c.value}</div>
+      ${deltaBadgeHTML(c.cur, c.prev)}
     </div>
-    <div class="analytics-summary-card">
-      <div class="analytics-summary-label">Units Sold</div>
-      <div class="analytics-summary-value">${current.items_sold}</div>
-      ${deltaHTML(Number(current.items_sold), Number(previous.items_sold), 'last year')}
-    </div>
-    <div class="analytics-summary-card">
-      <div class="analytics-summary-label">Orders</div>
-      <div class="analytics-summary-value">${current.order_count}</div>
-      ${deltaHTML(Number(current.order_count), Number(previous.order_count), 'last year')}
-    </div>
-    <div class="analytics-summary-card">
-      <div class="analytics-summary-label">Avg. Order Value</div>
-      <div class="analytics-summary-value">${formatMoney(avgOrder)}</div>
-      ${deltaHTML(avgOrder, avgOrderPrev, 'last year')}
-    </div>
+  `).join('');
+}
+
+function renderMiniStats(data) {
+  const { current } = data;
+  const el = document.getElementById('analyticsMiniStats');
+  const avgOrder = current.order_count > 0 ? current.revenue / current.order_count : 0;
+  el.innerHTML = `
+    <div><div class="analytics-mini-stat-label">Revenue</div><div class="analytics-mini-stat-value">${formatMoney(current.revenue)}</div></div>
+    <div><div class="analytics-mini-stat-label">Orders</div><div class="analytics-mini-stat-value">${current.order_count}</div></div>
+    <div><div class="analytics-mini-stat-label">Units</div><div class="analytics-mini-stat-value">${current.items_sold}</div></div>
+    <div><div class="analytics-mini-stat-label">Avg Order</div><div class="analytics-mini-stat-value">${formatMoney(avgOrder)}</div></div>
   `;
 }
 
-function renderCharts(monthlyData) {
-  const revenueCtx = document.getElementById('revenueChart');
-  const unitsCtx    = document.getElementById('unitsChart');
-
+function renderTrendChart(monthlyData) {
+  const ctx = document.getElementById('revenueChart');
   if (revenueChartInstance) revenueChartInstance.destroy();
-  if (unitsChartInstance)   unitsChartInstance.destroy();
 
   const labels  = monthlyData.map(m => MONTH_LABELS[m.month - 1]);
   const revenue = monthlyData.map(m => Number(m.revenue));
-  const units   = monthlyData.map(m => Number(m.items_sold));
 
-  revenueChartInstance = new Chart(revenueCtx, {
-    type: 'bar',
+  revenueChartInstance = new Chart(ctx, {
+    type: 'line',
     data: {
       labels,
-      datasets: [{ label: 'Revenue ($)', data: revenue, backgroundColor: '#dda297', borderRadius: 5 }],
+      datasets: [{
+        label: 'Revenue ($)',
+        data: revenue,
+        borderColor: '#dda297',
+        backgroundColor: 'rgba(221, 162, 151, 0.15)',
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#dda297',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2.5,
+      }],
     },
     options: {
       responsive: true,
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { callback: (v) => '$' + v } } },
-    },
-  });
-
-  unitsChartInstance = new Chart(unitsCtx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{ label: 'Units Sold', data: units, backgroundColor: '#7fa8c9', borderRadius: 5 }],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: (v) => '$' + v }, grid: { color: '#f5ece7' } },
+        x: { grid: { display: false } },
+      },
     },
   });
 }
 
-function renderTopProducts(products) {
-  const tbody = document.getElementById('topProductsTableBody');
-  if (products.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#a08e88; padding:24px;">No sales yet this year.</td></tr>';
+function renderDonut(canvasId, legendId, rows, labelKey, valueKey, formatter, labelMap, colorMap) {
+  const ctx = document.getElementById(canvasId);
+  const legendEl = document.getElementById(legendId);
+  const isCategory = canvasId === 'categoryChart';
+
+  if (isCategory && categoryChartInstance) categoryChartInstance.destroy();
+  if (!isCategory && statusChartInstance) statusChartInstance.destroy();
+
+  if (!rows || rows.length === 0) {
+    legendEl.innerHTML = '<p class="analytics-rank-empty">No data yet.</p>';
+    const ctxObj = ctx.getContext('2d');
+    ctxObj.clearRect(0, 0, ctx.width, ctx.height);
     return;
   }
-  tbody.innerHTML = products.map((p, i) => `
-    <tr>
-      <td>${i + 1}</td>
-      <td>${p.name}</td>
-      <td>${p.units_sold}</td>
-      <td>${formatMoney(p.revenue)}</td>
-    </tr>
+
+  const labels = rows.map(r => labelMap ? (labelMap[r[labelKey]] || r[labelKey]) : r[labelKey]);
+  const values = rows.map(r => Number(r[valueKey]));
+  const colors = rows.map((r, i) => colorMap ? (colorMap[r[labelKey]] || CHART_COLORS[i % CHART_COLORS.length]) : CHART_COLORS[i % CHART_COLORS.length]);
+
+  const chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true,
+      cutout: '68%',
+      plugins: { legend: { display: false } },
+    },
+  });
+
+  if (isCategory) categoryChartInstance = chart; else statusChartInstance = chart;
+
+  const total = values.reduce((a, b) => a + b, 0);
+  legendEl.innerHTML = rows.map((r, i) => {
+    const val = Number(r[valueKey]);
+    const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
+    return `
+      <div class="analytics-legend-row">
+        <span class="analytics-legend-dot" style="background:${colors[i]}"></span>
+        <span class="analytics-legend-label">${labels[i]}</span>
+        <span class="analytics-legend-value">${pct}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTopProductsList(products) {
+  const listEl = document.getElementById('topProductsList');
+  if (products.length === 0) {
+    listEl.innerHTML = '<p class="analytics-rank-empty">No sales yet this year.</p>';
+    return;
+  }
+  listEl.innerHTML = products.map((p, i) => `
+    <li class="analytics-rank-row">
+      <span class="analytics-rank-num">${i + 1}</span>
+      <span class="analytics-rank-name">${p.name}</span>
+      <span class="analytics-rank-meta">${p.units_sold} sold<br>${formatMoney(p.revenue)}</span>
+    </li>
   `).join('');
 }
 
