@@ -318,7 +318,8 @@ router.post('/orders/:id/cancel', async (req, res) => {
 router.post('/orders/:id/review', async (req, res) => {
   const conn = await pool.getConnection();
   try {
-    const rating = parseInt(req.body.rating, 10);
+    const rating  = parseInt(req.body.rating, 10);
+    const comment = (req.body.comment || '').trim().slice(0, 1000); // sane length cap
     if (!rating || rating < 1 || rating > 5) {
       conn.release();
       return res.status(400).json({ success: false, message: 'rating must be between 1 and 5' });
@@ -336,7 +337,8 @@ router.post('/orders/:id/review', async (req, res) => {
       return res.status(400).json({ success: false, message: 'This order is not ready to be reviewed' });
     }
 
-    // Bump review_count once per distinct product in this order (not per unit ordered)
+    // One written review row per distinct product in this order (not per unit ordered),
+    // plus bump review_count and recompute the product's average star rating.
     const [items] = await conn.query(
       'SELECT DISTINCT product_id FROM order_items WHERE order_id = ? AND product_id IS NOT NULL',
       [req.params.id]
@@ -344,8 +346,21 @@ router.post('/orders/:id/review', async (req, res) => {
     for (const item of items) {
       const [[product]] = await conn.query('SELECT review_count FROM products WHERE id = ?', [item.product_id]);
       if (!product) continue; // product was deleted since this order was placed
+
+      await conn.query(
+        'INSERT INTO reviews (product_id, user_id, order_id, rating, comment) VALUES (?, ?, ?, ?, ?)',
+        [item.product_id, req.user.id, req.params.id, rating, comment || null]
+      );
+
       const newCount = parseReviewCount(product.review_count) + 1;
-      await conn.query('UPDATE products SET review_count = ? WHERE id = ?', [String(newCount), item.product_id]);
+      const [[avgRow]] = await conn.query(
+        'SELECT AVG(rating) AS avg_rating FROM reviews WHERE product_id = ?',
+        [item.product_id]
+      );
+      await conn.query(
+        'UPDATE products SET review_count = ?, rating = ? WHERE id = ?',
+        [String(newCount), Number(avgRow.avg_rating).toFixed(1), item.product_id]
+      );
     }
 
     await conn.commit();

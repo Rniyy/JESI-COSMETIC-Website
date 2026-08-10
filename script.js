@@ -573,6 +573,7 @@ function initAuth() {
       } else if (o.status === 'to_review') {
         actionsHTML = `
           ${starPickerHTML(o.id)}
+          <textarea class="order-review-comment" data-order-id="${o.id}" placeholder="Share your thoughts about this order (optional)" rows="2"></textarea>
           <div class="order-card-actions">
             <button class="order-btn-primary" data-action="submit-review" data-order-id="${o.id}">Submit Review</button>
           </div>`;
@@ -637,10 +638,13 @@ function initAuth() {
         const rating = Number(picker?.dataset.selected || 0);
         if (!rating) { showToast('Pick a star rating first', 'error'); return; }
 
+        const commentEl = listEl.querySelector(`.order-review-comment[data-order-id="${btn.dataset.orderId}"]`);
+        const comment = commentEl ? commentEl.value.trim() : '';
+
         const res  = await fetch(`${API}/checkout/orders/${btn.dataset.orderId}/review`, {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rating }),
+          body: JSON.stringify({ rating, comment }),
         });
         const json = await res.json();
         if (!json.success) { showToast(json.message || 'Could not submit review', 'error'); return; }
@@ -1422,9 +1426,43 @@ function initQuickView() {
 
     qvWish.classList.toggle('wished', !!wished);
 
+    loadQvReviews(card.dataset.productId);
+
     overlay.classList.add('open');
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
+  }
+
+  async function loadQvReviews(productId) {
+    const reviewsEl = document.getElementById('qvReviews');
+    if (!productId) { reviewsEl.innerHTML = ''; return; }
+    reviewsEl.innerHTML = '<p class="qv-reviews-loading">Loading reviews…</p>';
+
+    try {
+      const res  = await fetch(`${API}/products/${productId}/reviews`, { credentials: 'include' });
+      const json = await res.json();
+      if (!json.success || json.data.length === 0) {
+        reviewsEl.innerHTML = '<p class="qv-reviews-empty">No reviews yet — be the first to review this product!</p>';
+        return;
+      }
+
+      reviewsEl.innerHTML = `
+        <h3 class="qv-reviews-title">Reviews (${json.data.length})</h3>
+        ${json.data.map(r => `
+          <div class="qv-review-row">
+            <div class="qv-review-head">
+              <span class="qv-review-name">${r.reviewer_first_name || 'Customer'}</span>
+              <span class="qv-review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+            </div>
+            ${r.comment ? `<p class="qv-review-comment">${r.comment}</p>` : ''}
+            <span class="qv-review-date">${new Date(r.created_at).toLocaleDateString()}</span>
+          </div>
+        `).join('')}
+      `;
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+      reviewsEl.innerHTML = '<p class="qv-reviews-empty">Could not load reviews.</p>';
+    }
   }
 
   function closeModal() {

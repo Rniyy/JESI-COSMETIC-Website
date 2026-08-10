@@ -53,4 +53,27 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/products/:id/reviews
+ * Public — shows reviewer first name, star rating, comment, and date.
+ * Full name/email are never exposed here.
+ */
+router.get('/:id/reviews', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT r.rating, r.comment, r.created_at,
+              SUBSTRING_INDEX(u.name, ' ', 1) AS reviewer_first_name
+       FROM reviews r
+       JOIN users u ON u.id = r.user_id
+       WHERE r.product_id = ?
+       ORDER BY r.created_at DESC`,
+      [req.params.id]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('GET /products/:id/reviews error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch reviews' });
+  }
+});
+
 module.exports = router;

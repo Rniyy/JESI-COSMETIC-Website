@@ -689,3 +689,69 @@
 
 /* Ensure the Quick View image container can host the out-of-stock overlay */
 .qv-img { position: relative; }
+
+/* ───────── QUICK VIEW — PRODUCT REVIEWS ───────── */
+.qv-reviews {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0e4de;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.qv-reviews-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #3a2e2b;
+  margin: 0 0 10px;
+}
+.qv-reviews-loading, .qv-reviews-empty {
+  font-size: 13px;
+  color: #a08e88;
+  margin: 0;
+}
+.qv-review-row {
+  padding: 10px 0;
+  border-bottom: 1px solid #f8f2ef;
+}
+.qv-review-row:last-child { border-bottom: none; }
+.qv-review-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.qv-review-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3a2e2b;
+}
+.qv-review-stars {
+  font-size: 13px;
+  color: #dda297;
+}
+.qv-review-comment {
+  font-size: 13px;
+  color: #6b5b56;
+  line-height: 1.5;
+  margin: 4px 0;
+}
+.qv-review-date {
+  font-size: 11px;
+  color: #a08e88;
+}
+
+/* ───────── ORDER REVIEW COMMENT BOX ───────── */
+.order-review-comment {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  color: #3a2e2b;
+  padding: 8px 10px;
+  border: 1.5px solid #ecdfd9;
+  border-radius: 8px;
+  resize: vertical;
+  margin-top: 8px;
+  outline: none;
+  box-sizing: border-box;
+}
+.order-review-comment:focus { border-color: #dda297; }
