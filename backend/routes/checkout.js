@@ -1,10 +1,39 @@
 const express = require('express');
 const router  = express.Router();
 const bcrypt  = require('bcryptjs');
+const multer  = require('multer');
+const crypto  = require('crypto');
+const path    = require('path');
 const pool    = require('../db/pool');
 
 const FLAT_SHIPPING_FEE   = 5.00;
 const FREE_SHIPPING_ABOVE = 50.00;
+
+// ── Review media upload config ──
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+const MAX_IMAGE_BYTES = 5  * 1024 * 1024;  // 5MB per image
+const MAX_VIDEO_BYTES = 30 * 1024 * 1024;  // 30MB per video
+const MAX_FILES = 5;
+
+const reviewMediaStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads', 'reviews')),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${crypto.randomBytes(16).toString('hex')}${ext}`);
+  },
+});
+
+const uploadReviewMedia = multer({
+  storage: reviewMediaStorage,
+  limits: { fileSize: MAX_VIDEO_BYTES, files: MAX_FILES },
+  fileFilter: (req, file, cb) => {
+    if (![...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].includes(file.mimetype)) {
+      return cb(new Error('Only JPEG/PNG/WEBP/GIF images or MP4/WEBM/MOV videos are allowed'));
+    }
+    cb(null, true);
+  },
+});
 
 /**
  * review_count is stored as text so seeded values like "1.2k" round-trip
@@ -315,7 +344,7 @@ router.post('/orders/:id/cancel', async (req, res) => {
  * Only allowed while "to_review". One star rating per order (not per item),
  * but every distinct product in the order gets its review_count bumped by 1.
  */
-router.post('/orders/:id/review', async (req, res) => {
+router.post('/orders/:id/review', uploadReviewMedia.array('media', MAX_FILES), async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const rating  = parseInt(req.body.rating, 10);
@@ -323,6 +352,18 @@ router.post('/orders/:id/review', async (req, res) => {
     if (!rating || rating < 1 || rating > 5) {
       conn.release();
       return res.status(400).json({ success: false, message: 'rating must be between 1 and 5' });
+    }
+
+    // Reject any image that snuck past the shared file-size ceiling but
+    // exceeds the smaller per-image limit (videos get the full 30MB).
+    const fs = require('fs');
+    for (const file of req.files || []) {
+      const isImage = ALLOWED_IMAGE_TYPES.includes(file.mimetype);
+      if (isImage && file.size > MAX_IMAGE_BYTES) {
+        (req.files || []).forEach(f => fs.unlink(f.path, () => {}));
+        conn.release();
+        return res.status(400).json({ success: false, message: `Image "${file.originalname}" is over the 5MB limit` });
+      }
     }
 
     await conn.beginTransaction();
@@ -334,6 +375,7 @@ router.post('/orders/:id/review', async (req, res) => {
     if (result.affectedRows === 0) {
       await conn.rollback();
       conn.release();
+      (req.files || []).forEach(f => fs.unlink(f.path, () => {}));
       return res.status(400).json({ success: false, message: 'This order is not ready to be reviewed' });
     }
 
@@ -347,10 +389,19 @@ router.post('/orders/:id/review', async (req, res) => {
       const [[product]] = await conn.query('SELECT review_count FROM products WHERE id = ?', [item.product_id]);
       if (!product) continue; // product was deleted since this order was placed
 
-      await conn.query(
+      const [reviewResult] = await conn.query(
         'INSERT INTO reviews (product_id, user_id, order_id, rating, comment) VALUES (?, ?, ?, ?, ?)',
         [item.product_id, req.user.id, req.params.id, rating, comment || null]
       );
+
+      // Attach the same uploaded media to this product's review row
+      for (const file of req.files || []) {
+        const mediaType = ALLOWED_IMAGE_TYPES.includes(file.mimetype) ? 'image' : 'video';
+        await conn.query(
+          'INSERT INTO review_media (review_id, media_type, url) VALUES (?, ?, ?)',
+          [reviewResult.insertId, mediaType, `/uploads/reviews/${file.filename}`]
+        );
+      }
 
       const newCount = parseReviewCount(product.review_count) + 1;
       const [[avgRow]] = await conn.query(

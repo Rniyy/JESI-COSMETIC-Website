@@ -61,7 +61,7 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/reviews', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT r.rating, r.comment, r.created_at,
+      `SELECT r.id, r.rating, r.comment, r.created_at,
               SUBSTRING_INDEX(u.name, ' ', 1) AS reviewer_first_name
        FROM reviews r
        JOIN users u ON u.id = r.user_id
@@ -69,7 +69,24 @@ router.get('/:id/reviews', async (req, res) => {
        ORDER BY r.created_at DESC`,
       [req.params.id]
     );
-    res.json({ success: true, data: rows });
+
+    if (rows.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const reviewIds = rows.map(r => r.id);
+    const [media] = await pool.query(
+      'SELECT review_id, media_type, url FROM review_media WHERE review_id IN (?)',
+      [reviewIds]
+    );
+    const mediaByReview = {};
+    for (const m of media) {
+      if (!mediaByReview[m.review_id]) mediaByReview[m.review_id] = [];
+      mediaByReview[m.review_id].push({ media_type: m.media_type, url: m.url });
+    }
+
+    const data = rows.map(r => ({ ...r, media: mediaByReview[r.id] || [] }));
+    res.json({ success: true, data });
   } catch (err) {
     console.error('GET /products/:id/reviews error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch reviews' });

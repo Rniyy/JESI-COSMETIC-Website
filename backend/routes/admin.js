@@ -72,6 +72,9 @@ router.put('/products/:id', async (req, res) => {
 
     const qty = Math.max(0, parseInt(stock_quantity, 10) || 0);
 
+    // Check stock BEFORE updating, so we can detect a 0 -> available transition
+    const [[before]] = await pool.query('SELECT stock_quantity, name FROM products WHERE id = ?', [req.params.id]);
+
     const [result] = await pool.query(
       `UPDATE products SET
         name = ?, category = ?, brand = ?, price = ?, old_price = ?,
@@ -88,6 +91,25 @@ router.put('/products/:id', async (req, res) => {
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // Product just came back in stock — notify everyone (logged-in users only,
+    // since guest wishlists have no account to attach a notification to) who
+    // wishlisted it.
+    if (before && Number(before.stock_quantity) <= 0 && qty > 0) {
+      const [wishlisters] = await pool.query(
+        'SELECT DISTINCT user_id FROM wishlist_items WHERE product_id = ? AND user_id IS NOT NULL',
+        [req.params.id]
+      );
+      for (const w of wishlisters) {
+        await pool.query(
+          `INSERT INTO notifications (user_id, type, product_id, message) VALUES (?, 'back_in_stock', ?, ?)`,
+          [w.user_id, req.params.id, `"${name}" is back in stock!`]
+        );
+      }
+      if (wishlisters.length > 0) {
+        console.log(`[BACK IN STOCK] Notified ${wishlisters.length} wishlister(s) about "${name}"`);
+      }
     }
 
     const [[updated]] = await pool.query('SELECT * FROM products WHERE id = ?', [req.params.id]);

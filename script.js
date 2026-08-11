@@ -5,6 +5,7 @@
 ═══════════════════════════════════════════════════════════ */
 
 const API = 'http://localhost:3000/api';
+const API_ORIGIN = API.replace(/\/api\/?$/, ''); // for uploaded file URLs like /uploads/reviews/...
 
 /* ─────────────────────────────────────────────────────────
    HERO SLIDER
@@ -574,6 +575,11 @@ function initAuth() {
         actionsHTML = `
           ${starPickerHTML(o.id)}
           <textarea class="order-review-comment" data-order-id="${o.id}" placeholder="Share your thoughts about this order (optional)" rows="2"></textarea>
+          <label class="order-review-media-label">
+            <i class="ti ti-camera-plus"></i> Add photos or videos (optional, up to 5)
+            <input type="file" class="order-review-media-input" data-order-id="${o.id}" accept="image/*,video/*" multiple hidden />
+          </label>
+          <div class="order-review-media-preview" data-order-id="${o.id}"></div>
           <div class="order-card-actions">
             <button class="order-btn-primary" data-action="submit-review" data-order-id="${o.id}">Submit Review</button>
           </div>`;
@@ -614,6 +620,21 @@ function initAuth() {
       });
     });
 
+    // Review media file picker — show small previews of what's selected
+    listEl.querySelectorAll('.order-review-media-input').forEach(input => {
+      input.addEventListener('change', () => {
+        const previewEl = listEl.querySelector(`.order-review-media-preview[data-order-id="${input.dataset.orderId}"]`);
+        previewEl.innerHTML = '';
+        [...input.files].slice(0, 5).forEach(file => {
+          const url = URL.createObjectURL(file);
+          const isVideo = file.type.startsWith('video/');
+          previewEl.insertAdjacentHTML('beforeend', isVideo
+            ? `<video src="${url}" class="order-review-media-thumb" muted></video>`
+            : `<img src="${url}" class="order-review-media-thumb" alt="preview">`);
+        });
+      });
+    });
+
     // Pay
     listEl.querySelectorAll('[data-action="pay"]').forEach(btn => {
       btn.addEventListener('click', () => openPaymentPinModal(btn.dataset.orderId));
@@ -641,15 +662,34 @@ function initAuth() {
         const commentEl = listEl.querySelector(`.order-review-comment[data-order-id="${btn.dataset.orderId}"]`);
         const comment = commentEl ? commentEl.value.trim() : '';
 
-        const res  = await fetch(`${API}/checkout/orders/${btn.dataset.orderId}/review`, {
-          method: 'POST', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rating, comment }),
-        });
-        const json = await res.json();
-        if (!json.success) { showToast(json.message || 'Could not submit review', 'error'); return; }
-        showToast('Thanks for your review!');
-        loadOrders();
+        const mediaInput = listEl.querySelector(`.order-review-media-input[data-order-id="${btn.dataset.orderId}"]`);
+
+        const formData = new FormData();
+        formData.append('rating', rating);
+        formData.append('comment', comment);
+        if (mediaInput) {
+          [...mediaInput.files].slice(0, 5).forEach(file => formData.append('media', file));
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+
+        try {
+          const res  = await fetch(`${API}/checkout/orders/${btn.dataset.orderId}/review`, {
+            method: 'POST', credentials: 'include',
+            body: formData, // no Content-Type header — browser sets the multipart boundary itself
+          });
+          const json = await res.json();
+          if (!json.success) { showToast(json.message || 'Could not submit review', 'error'); return; }
+          showToast('Thanks for your review!');
+          loadOrders();
+        } catch (err) {
+          showToast('Could not submit review — try again', 'error');
+          console.error(err);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Submit Review';
+        }
       });
     });
 
@@ -1048,6 +1088,114 @@ function initCheckout() {
       console.error(err);
     }
   });
+}
+
+/* ─────────────────────────────────────────────────────────
+   WISHLIST — heart button toggle
+───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   NOTIFICATIONS — bell icon dropdown
+───────────────────────────────────────────────────────── */
+function initNotifications() {
+  const notifBtn      = document.getElementById('notifBtn');
+  const notifOverlay  = document.getElementById('notifOverlay');
+  const notifDropdown = document.getElementById('notifDropdown');
+  const notifBadge    = document.getElementById('notifBadge');
+  const notifList     = document.getElementById('notifList');
+  const markAllBtn    = document.getElementById('notifMarkAllReadBtn');
+  if (!notifBtn) return;
+
+  function openNotifs() {
+    notifDropdown.classList.add('open');
+    notifOverlay.classList.add('open');
+    loadNotifications();
+  }
+  function closeNotifs() {
+    notifDropdown.classList.remove('open');
+    notifOverlay.classList.remove('open');
+  }
+
+  notifBtn.addEventListener('click', () => {
+    if (!window.currentUser) {
+      document.dispatchEvent(new CustomEvent('auth:required'));
+      return;
+    }
+    notifDropdown.classList.contains('open') ? closeNotifs() : openNotifs();
+  });
+  notifOverlay.addEventListener('click', closeNotifs);
+
+  async function updateNotifBadge() {
+    if (!window.currentUser) { notifBadge.style.display = 'none'; return; }
+    try {
+      const res  = await fetch(`${API}/notifications`, { credentials: 'include' });
+      const json = await res.json();
+      if (!json.success) return;
+      notifBadge.textContent   = json.unread_count;
+      notifBadge.style.display = json.unread_count > 0 ? '' : 'none';
+    } catch (_) {}
+  }
+
+  async function loadNotifications() {
+    notifList.innerHTML = '<p class="notif-empty">Loading…</p>';
+    try {
+      const res  = await fetch(`${API}/notifications`, { credentials: 'include' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+
+      notifBadge.textContent   = json.unread_count;
+      notifBadge.style.display = json.unread_count > 0 ? '' : 'none';
+
+      if (json.data.length === 0) {
+        notifList.innerHTML = '<p class="notif-empty">No notifications yet.</p>';
+        return;
+      }
+
+      notifList.innerHTML = json.data.map(n => `
+        <div class="notif-row ${n.is_read ? '' : 'unread'}" data-id="${n.id}" data-product-name="${n.message.split('"')[1] || ''}">
+          ${n.image_url
+            ? `<img class="notif-row-thumb" src="${n.image_url}" alt="">`
+            : `<div class="notif-row-thumb-placeholder"><i class="ti ti-bell"></i></div>`}
+          <div class="notif-row-text">
+            <div class="notif-row-message">${n.message}</div>
+            <div class="notif-row-date">${new Date(n.created_at).toLocaleDateString()}</div>
+          </div>
+        </div>
+      `).join('');
+
+      notifList.querySelectorAll('.notif-row').forEach(row => {
+        row.addEventListener('click', async () => {
+          await fetch(`${API}/notifications/${row.dataset.id}/read`, { method: 'PATCH', credentials: 'include' });
+          row.classList.remove('unread');
+          updateNotifBadge();
+
+          // Jump to the product in the search box, if we can identify it by name
+          const name = row.dataset.productName;
+          if (name) {
+            closeNotifs();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+              searchInput.value = name;
+              filterPageCards(name);
+              searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+      notifList.innerHTML = '<p class="notif-empty">Could not load notifications.</p>';
+    }
+  }
+
+  markAllBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    await fetch(`${API}/notifications/read-all`, { method: 'PATCH', credentials: 'include' });
+    loadNotifications();
+  });
+
+  // Quiet badge check on page load (only matters if already logged in)
+  updateNotifBadge();
+  document.addEventListener('cart:changed', updateNotifBadge); // reuses the "auth state may have changed" signal
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -1455,6 +1603,14 @@ function initQuickView() {
               <span class="qv-review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
             </div>
             ${r.comment ? `<p class="qv-review-comment">${r.comment}</p>` : ''}
+            ${r.media && r.media.length > 0 ? `
+              <div class="qv-review-media">
+                ${r.media.map(m => m.media_type === 'video'
+                  ? `<video src="${API_ORIGIN}${m.url}" class="qv-review-media-thumb" controls></video>`
+                  : `<img src="${API_ORIGIN}${m.url}" class="qv-review-media-thumb" alt="Review photo">`
+                ).join('')}
+              </div>
+            ` : ''}
             <span class="qv-review-date">${new Date(r.created_at).toLocaleDateString()}</span>
           </div>
         `).join('')}
@@ -1566,6 +1722,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initCart();
   initCheckout();
   initWishlist();
+  initNotifications();
   initSearch();
   initFilters();
   initNavToggle();

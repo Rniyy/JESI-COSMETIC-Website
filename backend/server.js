@@ -2,6 +2,8 @@ require('dotenv').config();
 const express      = require('express');
 const cors         = require('cors');
 const cookieParser = require('cookie-parser');
+const path         = require('path');
+const fs           = require('fs');
 
 const { ensureSession }  = require('./middleware/session');
 const { attachUser, requireAuth, requireAdmin } = require('./middleware/authMiddleware');
@@ -12,6 +14,7 @@ const wishlistRoutes     = require('./routes/wishlist');
 const authRoutes         = require('./routes/auth');
 const checkoutRoutes     = require('./routes/checkout');
 const addressesRoutes    = require('./routes/addresses');
+const notificationsRoutes = require('./routes/notifications');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +35,11 @@ app.use(cors({
   credentials: true,
 }));
 
+// Review photos/videos land in backend/uploads/reviews — create it if missing
+const uploadsDir = path.join(__dirname, 'uploads', 'reviews');
+fs.mkdirSync(uploadsDir, { recursive: true });
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(ensureSession);
@@ -43,6 +51,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/cart',     requireAuth, cartRoutes);
 app.use('/api/checkout', requireAuth, checkoutRoutes);
 app.use('/api/addresses', requireAuth, addressesRoutes);
+app.use('/api/notifications', requireAuth, notificationsRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'ok' }));
