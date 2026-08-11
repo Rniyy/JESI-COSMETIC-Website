@@ -898,3 +898,13 @@
   font-size: 13px;
   padding: 30px 10px;
 }
+
+/* ───────── FIX: qv-wish inherits .wish-btn's absolute corner positioning,
+   meant for floating over a product image — but here it sits in the
+   action row, so it was landing on top of the modal's close button. ───────── */
+.qv-actions .qv-wish {
+  position: static;
+  top: auto;
+  right: auto;
+  flex-shrink: 0;
+}
