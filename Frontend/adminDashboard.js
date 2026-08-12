@@ -475,6 +475,7 @@ function initOrderFilters() {
   const dateTo       = document.getElementById('orderDateTo');
   const statusFilter = document.getElementById('orderStatusFilter');
   const clearBtn      = document.getElementById('orderFiltersClearBtn');
+  const exportBtn      = document.getElementById('exportOrdersBtn');
 
   let debounceTimer;
   searchInput.addEventListener('input', () => {
@@ -490,6 +491,24 @@ function initOrderFilters() {
     dateTo.value = '';
     statusFilter.value = '';
     loadOrders();
+  });
+
+  exportBtn.addEventListener('click', () => {
+    const params = new URLSearchParams();
+    if (searchInput.value.trim()) params.set('q', searchInput.value.trim());
+    if (dateFrom.value)           params.set('date_from', dateFrom.value);
+    if (dateTo.value)             params.set('date_to', dateTo.value);
+    if (statusFilter.value)       params.set('status', statusFilter.value);
+    // Plain navigation (not fetch) so the browser handles the file download
+    // itself — the auth cookie still goes along automatically.
+    window.open(`${API}/admin/orders/export?${params.toString()}`, '_blank');
+  });
+}
+
+function initProductExport() {
+  const exportBtn = document.getElementById('exportProductsBtn');
+  exportBtn.addEventListener('click', () => {
+    window.open(`${API}/admin/products/export`, '_blank');
   });
 }
 
@@ -708,6 +727,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   initNav();
   initProductModal();
+  initProductExport();
   initOrderModal();
   initOrderFilters();
   loadProducts();

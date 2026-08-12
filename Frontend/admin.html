@@ -89,7 +89,10 @@
         <section class="admin-view" id="view-products">
           <div class="admin-view-head">
             <h1>Products</h1>
-            <button class="admin-primary-btn" id="addProductBtn">+ Add product</button>
+            <div class="admin-view-head-actions">
+              <button class="admin-secondary-btn" id="exportProductsBtn"><i class="ti ti-download"></i> Export CSV</button>
+              <button class="admin-primary-btn" id="addProductBtn">+ Add product</button>
+            </div>
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">
@@ -113,6 +116,7 @@
         <section class="admin-view" id="view-orders" style="display:none;">
           <div class="admin-view-head">
             <h1>Orders</h1>
+            <button class="admin-secondary-btn" id="exportOrdersBtn"><i class="ti ti-download"></i> Export CSV</button>
           </div>
           <div class="admin-filters-bar">
             <input type="text" id="orderSearchInput" class="admin-filter-input" placeholder="Search customer, email, or product…" />

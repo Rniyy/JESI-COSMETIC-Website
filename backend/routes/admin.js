@@ -263,6 +263,54 @@ router.get('/orders', async (req, res) => {
 });
 
 /**
+ * GET /api/admin/orders/export
+ * Downloads orders as a CSV file. Accepts the same q/date_from/date_to/status
+ * filters as GET /admin/orders, so exporting a filtered view works naturally.
+ * Registered BEFORE /orders/:id so "export" is never mistaken for an order id.
+ */
+router.get('/orders/export', async (req, res) => {
+  try {
+    const { q, date_from, date_to, status } = req.query;
+
+    let sql = `
+      SELECT o.id, o.status, o.subtotal, o.shipping_fee, o.total, o.placed_at,
+             u.name AS customer_name, u.email AS customer_email,
+             COUNT(oi.id) AS item_count
+      FROM orders o
+      JOIN users u ON u.id = o.user_id
+      LEFT JOIN order_items oi ON oi.order_id = o.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (q) {
+      sql += ` AND (
+        u.name LIKE ? OR u.email LIKE ?
+        OR EXISTS (SELECT 1 FROM order_items oi2 WHERE oi2.order_id = o.id AND oi2.product_name LIKE ?)
+      )`;
+      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    }
+    if (date_from) { sql += ' AND DATE(o.placed_at) >= ?'; params.push(date_from); }
+    if (date_to)   { sql += ' AND DATE(o.placed_at) <= ?'; params.push(date_to); }
+    if (status)    { sql += ' AND o.status = ?'; params.push(status); }
+
+    sql += ' GROUP BY o.id ORDER BY o.placed_at DESC';
+
+    const [rows] = await pool.query(sql, params);
+    const headers = ['id', 'customer_name', 'customer_email', 'status',
+                      'item_count', 'subtotal', 'shipping_fee', 'total', 'placed_at'];
+    const csv = toCSV(headers, rows);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="orders-${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    console.error('GET /admin/orders/export error:', err);
+    res.status(500).json({ success: false, message: 'Failed to export orders' });
+  }
+});
+
+/**
  * GET /api/admin/orders/:id
  */
 router.get('/orders/:id', async (req, res) => {
@@ -481,6 +529,45 @@ router.get('/analytics/by-status', async (req, res) => {
   } catch (err) {
     console.error('GET /admin/analytics/by-status error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch status breakdown' });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   CSV EXPORTS
+═══════════════════════════════════════════════════════════ */
+
+/** Turns one value into a safely-quoted CSV field. */
+function csvField(value) {
+  if (value === null || value === undefined) return '';
+  const str = String(value).replace(/"/g, '""');
+  return /[",\n]/.test(str) ? `"${str}"` : str;
+}
+
+function toCSV(headers, rows) {
+  const lines = [headers.map(csvField).join(',')];
+  for (const row of rows) {
+    lines.push(headers.map(h => csvField(row[h])).join(','));
+  }
+  return lines.join('\r\n');
+}
+
+/**
+ * GET /api/admin/products/export
+ * Downloads every product as a CSV file.
+ */
+router.get('/products/export', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM products ORDER BY id');
+    const headers = ['id', 'name', 'category', 'brand', 'price', 'old_price',
+                      'stock_quantity', 'in_stock', 'rating', 'review_count', 'badge'];
+    const csv = toCSV(headers, rows);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="products-${new Date().toISOString().slice(0, 10)}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    console.error('GET /admin/products/export error:', err);
+    res.status(500).json({ success: false, message: 'Failed to export products' });
   }
 });
 
