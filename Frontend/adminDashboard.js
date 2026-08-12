@@ -282,6 +282,8 @@ function initNav() {
 /* ─────────────────────────────────────────────────────────
    PRODUCTS
 ───────────────────────────────────────────────────────── */
+const LOW_STOCK_THRESHOLD = 5;
+
 async function loadProducts() {
   try {
     const res  = await fetch(`${API}/admin/products`, { credentials: 'include' });
@@ -289,9 +291,48 @@ async function loadProducts() {
     if (!json.success) throw new Error(json.message);
     allProducts = json.data;
     renderProductsTable();
+    renderLowStockBanner();
   } catch (err) {
     console.error('Failed to load products:', err);
   }
+}
+
+function renderLowStockBanner() {
+  const banner  = document.getElementById('lowStockBanner');
+  const navBadge = document.getElementById('lowStockNavBadge');
+  const lowStock = allProducts.filter(p => p.stock_quantity > 0 && p.stock_quantity <= LOW_STOCK_THRESHOLD);
+
+  if (lowStock.length === 0) {
+    banner.style.display = 'none';
+    navBadge.style.display = 'none';
+    return;
+  }
+
+  navBadge.textContent = lowStock.length;
+  navBadge.style.display = 'inline-block';
+
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    <div class="admin-low-stock-head" id="lowStockHead">
+      <span><i class="ti ti-alert-triangle" aria-hidden="true"></i>${lowStock.length} product${lowStock.length === 1 ? '' : 's'} running low on stock (${LOW_STOCK_THRESHOLD} units or fewer)</span>
+      <i class="ti ti-chevron-down admin-low-stock-toggle-icon" aria-hidden="true"></i>
+    </div>
+    <div class="admin-low-stock-list">
+      ${lowStock.map(p => `
+        <div class="admin-low-stock-row" data-id="${p.id}">
+          <span>${p.name}</span>
+          <span class="admin-low-stock-row-qty">${p.stock_quantity} left</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  banner.querySelector('#lowStockHead').addEventListener('click', () => {
+    banner.classList.toggle('expanded');
+  });
+  banner.querySelectorAll('.admin-low-stock-row').forEach(row => {
+    row.addEventListener('click', () => openProductModal(Number(row.dataset.id)));
+  });
 }
 
 function renderProductsTable() {

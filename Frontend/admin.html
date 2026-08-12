@@ -16,7 +16,7 @@
       <div class="admin-brand">JESI-COSMETIC <span>Admin</span></div>
       <nav class="admin-nav">
         <button class="admin-nav-btn" data-view="analytics">Analytics</button>
-        <button class="admin-nav-btn active" data-view="products">Products</button>
+        <button class="admin-nav-btn active" data-view="products">Products <span class="admin-nav-badge" id="lowStockNavBadge" style="display:none;">0</span></button>
         <button class="admin-nav-btn" data-view="orders">Orders</button>
         <button class="admin-nav-btn" data-view="users">Users</button>
       </nav>
@@ -94,6 +94,7 @@
               <button class="admin-primary-btn" id="addProductBtn">+ Add product</button>
             </div>
           </div>
+          <div class="admin-low-stock-banner" id="lowStockBanner" style="display:none;"></div>
           <div class="admin-table-wrap">
             <table class="admin-table">
               <thead>
