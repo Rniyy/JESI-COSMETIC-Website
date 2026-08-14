@@ -441,6 +441,7 @@ function initAuth() {
   const paymentPinConfirmWrap  = document.getElementById('paymentPinConfirmWrap');
   const paymentPinConfirmInput = document.getElementById('paymentPinConfirmInput');
   let payingOrderId = null;
+  let pendingCheckoutOrder = null; // set only when payment was triggered from checkout, not from My Orders
 
   function openPaymentPinModal(orderId) {
     payingOrderId = orderId;
@@ -468,9 +469,37 @@ function initAuth() {
     payingOrderId = null;
   }
 
-  paymentPinClose.addEventListener('click', closePaymentPinModal);
-  paymentPinCancelBtn.addEventListener('click', closePaymentPinModal);
-  paymentPinOverlay.addEventListener('click', (e) => { if (e.target === paymentPinOverlay) closePaymentPinModal(); });
+  // Checkout hands off straight into payment confirmation — no separate trip to My Orders needed
+  document.addEventListener('payment:required', (e) => {
+    pendingCheckoutOrder = e.detail;
+    openPaymentPinModal(e.detail.orderId);
+  });
+
+  paymentPinClose.addEventListener('click', () => {
+    const wasFromCheckout = !!pendingCheckoutOrder;
+    closePaymentPinModal();
+    if (wasFromCheckout) {
+      showToast('Order placed — you can finish payment anytime from My Orders');
+      pendingCheckoutOrder = null;
+    }
+  });
+  paymentPinCancelBtn.addEventListener('click', () => {
+    const wasFromCheckout = !!pendingCheckoutOrder;
+    closePaymentPinModal();
+    if (wasFromCheckout) {
+      showToast('Order placed — you can finish payment anytime from My Orders');
+      pendingCheckoutOrder = null;
+    }
+  });
+  paymentPinOverlay.addEventListener('click', (e) => {
+    if (e.target !== paymentPinOverlay) return;
+    const wasFromCheckout = !!pendingCheckoutOrder;
+    closePaymentPinModal();
+    if (wasFromCheckout) {
+      showToast('Order placed — you can finish payment anytime from My Orders');
+      pendingCheckoutOrder = null;
+    }
+  });
 
   paymentPinForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -502,7 +531,18 @@ function initAuth() {
       if (window.currentUser) window.currentUser.hasPaymentPin = true;
 
       closePaymentPinModal();
-      showToast('Payment received — order is on its way!');
+
+      if (pendingCheckoutOrder) {
+        const { orderId, total, discountAmount } = pendingCheckoutOrder;
+        const discountNote = Number(discountAmount) > 0 ? ` (saved $${discountAmount} with your coupon)` : '';
+        const confirmOverlay = document.getElementById('orderConfirmOverlay');
+        const confirmText    = document.getElementById('orderConfirmText');
+        confirmText.textContent = `Order #${orderId} placed and paid — total $${total}${discountNote}. Thank you!`;
+        confirmOverlay.classList.add('open');
+        pendingCheckoutOrder = null;
+      } else {
+        showToast('Payment received — order is on its way!');
+      }
       loadOrders();
     } catch (err) {
       paymentPinError.textContent   = 'Something went wrong — try again';
@@ -1114,10 +1154,6 @@ function initCheckout() {
       checkoutForm.reset();
       document.getElementById('checkoutCountry').value = 'Cambodia';
 
-      const discountNote = Number(json.data.discount_amount) > 0 ? ` (saved $${json.data.discount_amount} with your coupon)` : '';
-      confirmText.textContent = `Order #${json.data.id} placed — total $${json.data.total}${discountNote}. Thank you!`;
-      confirmOverlay.classList.add('open');
-
       // Cart is now empty server-side — refresh the badge/panel to reflect that
       document.dispatchEvent(new CustomEvent('cart:changed'));
 
@@ -1126,6 +1162,11 @@ function initCheckout() {
       const cartOverlay = document.getElementById('cartOverlay');
       if (cartPanel)   cartPanel.classList.remove('open');
       if (cartOverlay) cartOverlay.classList.remove('open');
+
+      // Go straight into payment confirmation — no separate trip to My Orders needed
+      document.dispatchEvent(new CustomEvent('payment:required', {
+        detail: { orderId: json.data.id, total: json.data.total, discountAmount: json.data.discount_amount },
+      }));
     } catch (err) {
       checkoutError.textContent   = 'Something went wrong — try again';
       checkoutError.style.display = 'block';
