@@ -571,4 +571,81 @@ router.get('/products/export', async (req, res) => {
   }
 });
 
+/* ═══════════════════════════════════════════════════════════
+   COUPONS
+═══════════════════════════════════════════════════════════ */
+
+router.get('/coupons', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('GET /admin/coupons error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch coupons' });
+  }
+});
+
+router.post('/coupons', async (req, res) => {
+  try {
+    const { code, discount_type, discount_value, min_order_amount, max_uses, expires_at, active } = req.body;
+
+    if (!code || !discount_type || discount_value === undefined) {
+      return res.status(400).json({ success: false, message: 'code, discount_type and discount_value are required' });
+    }
+    if (!['percent', 'fixed'].includes(discount_type)) {
+      return res.status(400).json({ success: false, message: "discount_type must be 'percent' or 'fixed'" });
+    }
+
+    const normalizedCode = code.trim().toUpperCase();
+
+    const [[existing]] = await pool.query('SELECT id FROM coupons WHERE code = ?', [normalizedCode]);
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'A coupon with that code already exists' });
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO coupons (code, discount_type, discount_value, min_order_amount, max_uses, expires_at, active)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        normalizedCode, discount_type, discount_value,
+        min_order_amount || null, max_uses || null, expires_at || null,
+        active === undefined ? 1 : (active ? 1 : 0),
+      ]
+    );
+
+    const [[created]] = await pool.query('SELECT * FROM coupons WHERE id = ?', [result.insertId]);
+    res.status(201).json({ success: true, data: created });
+  } catch (err) {
+    console.error('POST /admin/coupons error:', err);
+    res.status(500).json({ success: false, message: 'Failed to create coupon' });
+  }
+});
+
+router.patch('/coupons/:id', async (req, res) => {
+  try {
+    const { active } = req.body;
+    const [result] = await pool.query('UPDATE coupons SET active = ? WHERE id = ?', [active ? 1 : 0, req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Coupon not found' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('PATCH /admin/coupons/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update coupon' });
+  }
+});
+
+router.delete('/coupons/:id', async (req, res) => {
+  try {
+    const [result] = await pool.query('DELETE FROM coupons WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Coupon not found' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('DELETE /admin/coupons/:id error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete coupon' });
+  }
+});
+
 module.exports = router;

@@ -9,6 +9,34 @@ const pool    = require('../db/pool');
 const FLAT_SHIPPING_FEE   = 5.00;
 const FREE_SHIPPING_ABOVE = 50.00;
 
+/**
+ * Validates a coupon code against a given subtotal and returns the discount
+ * amount if valid. Shared by the checkout endpoint and the preview endpoint.
+ */
+async function validateCoupon(conn, code, subtotal) {
+  if (!code) return { valid: true, coupon: null, discountAmount: 0 };
+
+  const [[coupon]] = await conn.query('SELECT * FROM coupons WHERE code = ?', [code.trim().toUpperCase()]);
+
+  if (!coupon) return { valid: false, message: 'Coupon code not found' };
+  if (!coupon.active) return { valid: false, message: 'This coupon is no longer active' };
+  if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+    return { valid: false, message: 'This coupon has expired' };
+  }
+  if (coupon.max_uses !== null && coupon.times_used >= coupon.max_uses) {
+    return { valid: false, message: 'This coupon has reached its usage limit' };
+  }
+  if (coupon.min_order_amount && subtotal < Number(coupon.min_order_amount)) {
+    return { valid: false, message: `This coupon requires a minimum order of $${Number(coupon.min_order_amount).toFixed(2)}` };
+  }
+
+  const discountAmount = coupon.discount_type === 'percent'
+    ? subtotal * (Number(coupon.discount_value) / 100)
+    : Math.min(Number(coupon.discount_value), subtotal);
+
+  return { valid: true, coupon, discountAmount };
+}
+
 // ── Review media upload config ──
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
@@ -65,10 +93,34 @@ function parseReviewCount(value) {
  *  4. Empty the cart
  * All as one DB transaction — if anything fails partway, nothing is committed.
  */
+/**
+ * POST /api/checkout/validate-coupon   { code }
+ * Preview-only — checks a coupon against the user's CURRENT cart subtotal.
+ */
+router.post('/validate-coupon', async (req, res) => {
+  try {
+    const { code } = req.body;
+    const [cartItems] = await pool.query(
+      `SELECT p.price, c.quantity FROM cart_items c JOIN products p ON p.id = c.product_id WHERE c.user_id = ?`,
+      [req.user.id]
+    );
+    const subtotal = cartItems.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0);
+
+    const result = await validateCoupon(pool, code, subtotal);
+    if (!result.valid) {
+      return res.status(400).json({ success: false, message: result.message });
+    }
+    res.json({ success: true, data: { discount_amount: result.discountAmount.toFixed(2), subtotal: subtotal.toFixed(2) } });
+  } catch (err) {
+    console.error('POST /checkout/validate-coupon error:', err);
+    res.status(500).json({ success: false, message: 'Failed to validate coupon' });
+  }
+});
+
 router.post('/', async (req, res) => {
   const conn = await pool.getConnection();
   try {
-    const { address, address_id } = req.body;
+    const { address, address_id, coupon_code } = req.body;
 
     // Validate up front, before opening the transaction.
     let existingAddress = null;
@@ -105,7 +157,15 @@ router.post('/', async (req, res) => {
 
     const subtotal     = cartItems.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0);
     const shippingFee  = subtotal >= FREE_SHIPPING_ABOVE ? 0 : FLAT_SHIPPING_FEE;
-    const total        = subtotal + shippingFee;
+
+    const couponResult = await validateCoupon(conn, coupon_code, subtotal);
+    if (!couponResult.valid) {
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ success: false, message: couponResult.message });
+    }
+    const discountAmount = couponResult.discountAmount || 0;
+    const total = Math.max(0, subtotal + shippingFee - discountAmount);
 
     // 1.5. Decrement stock atomically. The WHERE clause doubles as the
     // check — if another order already took the last units between the
@@ -148,11 +208,18 @@ router.post('/', async (req, res) => {
 
     // 3. Create the order
     const [orderResult] = await conn.query(
-      `INSERT INTO orders (user_id, address_id, status, subtotal, shipping_fee, total)
-       VALUES (?, ?, 'to_pay', ?, ?, ?)`,
-      [req.user.id, addressIdForOrder, subtotal.toFixed(2), shippingFee.toFixed(2), total.toFixed(2)]
+      `INSERT INTO orders (user_id, address_id, status, subtotal, shipping_fee, coupon_code, discount_amount, total)
+       VALUES (?, ?, 'to_pay', ?, ?, ?, ?, ?)`,
+      [
+        req.user.id, addressIdForOrder, subtotal.toFixed(2), shippingFee.toFixed(2),
+        couponResult.coupon ? couponResult.coupon.code : null, discountAmount.toFixed(2), total.toFixed(2),
+      ]
     );
     const orderId = orderResult.insertId;
+
+    if (couponResult.coupon) {
+      await conn.query('UPDATE coupons SET times_used = times_used + 1 WHERE id = ?', [couponResult.coupon.id]);
+    }
 
     for (const item of cartItems) {
       await conn.query(
@@ -169,7 +236,10 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: { id: orderId, subtotal: subtotal.toFixed(2), shipping_fee: shippingFee.toFixed(2), total: total.toFixed(2) },
+      data: {
+        id: orderId, subtotal: subtotal.toFixed(2), shipping_fee: shippingFee.toFixed(2),
+        discount_amount: discountAmount.toFixed(2), total: total.toFixed(2),
+      },
     });
   } catch (err) {
     await conn.rollback();

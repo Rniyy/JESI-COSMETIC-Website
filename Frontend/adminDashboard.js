@@ -1,6 +1,7 @@
 const API = 'http://localhost:3000/api';
 
 let allProducts = [];
+let allCoupons   = [];
 let allOrders    = [];
 let allUsers     = [];
 let currentAdminId = null;
@@ -259,6 +260,7 @@ async function initAnalytics() {
 function initNav() {
   const navBtns = document.querySelectorAll('.admin-nav-btn');
   let analyticsLoaded = false;
+  let couponsLoaded = false;
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       navBtns.forEach(b => b.classList.remove('active'));
@@ -269,6 +271,10 @@ function initNav() {
       if (btn.dataset.view === 'analytics' && !analyticsLoaded) {
         analyticsLoaded = true;
         initAnalytics();
+      }
+      if (btn.dataset.view === 'coupons' && !couponsLoaded) {
+        couponsLoaded = true;
+        loadCoupons();
       }
     });
   });
@@ -676,6 +682,125 @@ function initOrderModal() {
 /* ─────────────────────────────────────────────────────────
    USERS
 ───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   COUPONS
+───────────────────────────────────────────────────────── */
+async function loadCoupons() {
+  try {
+    const res  = await fetch(`${API}/admin/coupons`, { credentials: 'include' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    allCoupons = json.data;
+    renderCouponsTable();
+  } catch (err) {
+    console.error('Failed to load coupons:', err);
+  }
+}
+
+function renderCouponsTable() {
+  const tbody = document.getElementById('couponsTableBody');
+  if (allCoupons.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#a08e88; padding:24px;">No coupons yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = allCoupons.map(c => {
+    const discountText = c.discount_type === 'percent' ? `${Number(c.discount_value)}%` : `$${Number(c.discount_value).toFixed(2)}`;
+    const usesText = c.max_uses ? `${c.times_used} / ${c.max_uses}` : `${c.times_used} / ∞`;
+    const expiresText = c.expires_at ? new Date(c.expires_at).toLocaleDateString() : 'Never';
+    const isExpired = c.expires_at && new Date(c.expires_at) < new Date();
+    return `
+      <tr>
+        <td><strong>${c.code}</strong></td>
+        <td>${discountText}</td>
+        <td>${c.min_order_amount ? '$' + Number(c.min_order_amount).toFixed(2) : '—'}</td>
+        <td>${usesText}</td>
+        <td>${expiresText}</td>
+        <td>${
+          isExpired ? '<span class="admin-badge-pill out-of-stock">Expired</span>'
+          : c.active ? '<span class="admin-badge-pill">Active</span>'
+          : '<span class="admin-badge-pill out-of-stock">Disabled</span>'
+        }</td>
+        <td>
+          <div class="admin-row-actions">
+            <button class="admin-icon-btn edit" data-id="${c.id}" data-active="${c.active}">${c.active ? 'Disable' : 'Enable'}</button>
+            <button class="admin-icon-btn delete" data-id="${c.id}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.edit').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const newActive = btn.dataset.active === '1' ? 0 : 1;
+      await fetch(`${API}/admin/coupons/${btn.dataset.id}`, {
+        method: 'PATCH', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newActive }),
+      });
+      loadCoupons();
+    });
+  });
+  tbody.querySelectorAll('.delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const coupon = allCoupons.find(c => c.id === Number(btn.dataset.id));
+      if (!confirm(`Delete coupon "${coupon ? coupon.code : ''}"?`)) return;
+      await fetch(`${API}/admin/coupons/${btn.dataset.id}`, { method: 'DELETE', credentials: 'include' });
+      loadCoupons();
+    });
+  });
+}
+
+function initCouponModal() {
+  const overlay = document.getElementById('couponModalOverlay');
+  const form    = document.getElementById('couponForm');
+  const errorEl = document.getElementById('couponFormError');
+
+  document.getElementById('addCouponBtn').addEventListener('click', () => {
+    form.reset();
+    errorEl.style.display = 'none';
+    overlay.classList.add('open');
+  });
+  document.getElementById('couponModalClose').addEventListener('click', () => overlay.classList.remove('open'));
+  document.getElementById('couponCancelBtn').addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.addEventListener('click', (e) => { if (e.target.id === 'couponModalOverlay') overlay.classList.remove('open'); });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.style.display = 'none';
+
+    const payload = {
+      code:             document.getElementById('couponCode').value.trim(),
+      discount_type:    document.getElementById('couponDiscountType').value,
+      discount_value:   parseFloat(document.getElementById('couponDiscountValue').value),
+      min_order_amount: document.getElementById('couponMinOrder').value ? parseFloat(document.getElementById('couponMinOrder').value) : null,
+      max_uses:         document.getElementById('couponMaxUses').value ? parseInt(document.getElementById('couponMaxUses').value, 10) : null,
+      expires_at:       document.getElementById('couponExpiresAt').value || null,
+    };
+
+    try {
+      const res  = await fetch(`${API}/admin/coupons`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        errorEl.textContent   = json.message || 'Could not create coupon';
+        errorEl.style.display = 'block';
+        return;
+      }
+      overlay.classList.remove('open');
+      loadCoupons();
+    } catch (err) {
+      errorEl.textContent   = 'Something went wrong — try again';
+      errorEl.style.display = 'block';
+      console.error(err);
+    }
+  });
+}
+
 async function loadUsers() {
   try {
     const res  = await fetch(`${API}/admin/users`, { credentials: 'include' });
@@ -769,6 +894,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initNav();
   initProductModal();
   initProductExport();
+  initCouponModal();
   initOrderModal();
   initOrderFilters();
   loadProducts();

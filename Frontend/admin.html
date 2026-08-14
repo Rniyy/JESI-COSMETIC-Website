@@ -19,6 +19,7 @@
         <button class="admin-nav-btn active" data-view="products">Products <span class="admin-nav-badge" id="lowStockNavBadge" style="display:none;">0</span></button>
         <button class="admin-nav-btn" data-view="orders">Orders</button>
         <button class="admin-nav-btn" data-view="users">Users</button>
+        <button class="admin-nav-btn" data-view="coupons">Coupons</button>
       </nav>
       <div class="admin-sidebar-foot">
         <a href="shop.html" class="admin-back-link">&larr; Back to shop</a>
@@ -172,6 +173,30 @@
           </div>
         </section>
 
+        <!-- COUPONS VIEW -->
+        <section class="admin-view" id="view-coupons" style="display:none;">
+          <div class="admin-view-head">
+            <h1>Coupons</h1>
+            <button class="admin-primary-btn" id="addCouponBtn">+ Add coupon</button>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Discount</th>
+                  <th>Min. Order</th>
+                  <th>Uses</th>
+                  <th>Expires</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="couponsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
       </div>
     </main>
   </div>
@@ -289,6 +314,48 @@
           <button type="button" class="admin-primary-btn" id="orderStatusSaveBtn">Update status</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ADD COUPON MODAL -->
+  <div class="admin-modal-overlay" id="couponModalOverlay">
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Add coupon</h2>
+        <button class="admin-modal-close" id="couponModalClose">&times;</button>
+      </div>
+      <form class="admin-modal-form" id="couponForm">
+        <p class="admin-form-error" id="couponFormError" style="display:none;"></p>
+        <label>Code
+          <input type="text" id="couponCode" placeholder="e.g. WELCOME10" required style="text-transform:uppercase;" />
+        </label>
+        <div class="admin-form-row">
+          <label>Discount type
+            <select id="couponDiscountType">
+              <option value="percent">Percent (%)</option>
+              <option value="fixed">Fixed amount ($)</option>
+            </select>
+          </label>
+          <label>Discount value
+            <input type="number" id="couponDiscountValue" step="0.01" min="0" required />
+          </label>
+        </div>
+        <div class="admin-form-row">
+          <label>Min. order amount (optional)
+            <input type="number" id="couponMinOrder" step="0.01" min="0" />
+          </label>
+          <label>Max uses (optional)
+            <input type="number" id="couponMaxUses" min="1" step="1" />
+          </label>
+        </div>
+        <label>Expires on (optional)
+          <input type="date" id="couponExpiresAt" />
+        </label>
+        <div class="admin-modal-actions">
+          <button type="button" class="admin-secondary-btn" id="couponCancelBtn">Cancel</button>
+          <button type="submit" class="admin-primary-btn">Save coupon</button>
+        </div>
+      </form>
     </div>
   </div>
 

@@ -943,6 +943,11 @@ function initCheckout() {
   const confirmOkBtn    = document.getElementById('orderConfirmOkBtn');
   const confirmText    = document.getElementById('orderConfirmText');
 
+  const couponInput    = document.getElementById('checkoutCouponInput');
+  const couponApplyBtn = document.getElementById('checkoutCouponApplyBtn');
+  const couponMessage  = document.getElementById('checkoutCouponMessage');
+  let appliedCouponCode = null;
+
   if (!checkoutBtn) return;
 
   let savedAddresses = [];
@@ -999,6 +1004,9 @@ function initCheckout() {
 
   function openCheckout() {
     checkoutError.style.display = 'none';
+    appliedCouponCode = null;
+    couponInput.value = '';
+    couponMessage.style.display = 'none';
     // Close the cart drawer first so the checkout modal isn't hidden behind it
     const cartPanel   = document.getElementById('cartPanel');
     const cartOverlay = document.getElementById('cartOverlay');
@@ -1024,6 +1032,37 @@ function initCheckout() {
   confirmClose.addEventListener('click', closeConfirm);
   confirmOkBtn.addEventListener('click', closeConfirm);
   confirmOverlay.addEventListener('click', (e) => { if (e.target === confirmOverlay) closeConfirm(); });
+
+  couponApplyBtn.addEventListener('click', async () => {
+    const code = couponInput.value.trim();
+    couponMessage.style.display = 'none';
+    if (!code) return;
+
+    try {
+      const res  = await fetch(`${API}/checkout/validate-coupon`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        appliedCouponCode = null;
+        couponMessage.textContent   = json.message || 'Invalid coupon';
+        couponMessage.className     = 'checkout-coupon-message error';
+        couponMessage.style.display = 'block';
+        return;
+      }
+      appliedCouponCode = code.toUpperCase();
+      couponMessage.textContent   = `Coupon applied — $${json.data.discount_amount} off`;
+      couponMessage.className     = 'checkout-coupon-message success';
+      couponMessage.style.display = 'block';
+    } catch (err) {
+      couponMessage.textContent   = 'Could not validate coupon — try again';
+      couponMessage.className     = 'checkout-coupon-message error';
+      couponMessage.style.display = 'block';
+      console.error(err);
+    }
+  });
 
   checkoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1053,6 +1092,10 @@ function initCheckout() {
       body = { address };
     }
 
+    if (appliedCouponCode) {
+      body.coupon_code = appliedCouponCode;
+    }
+
     try {
       const res  = await fetch(`${API}/checkout`, {
         method:      'POST',
@@ -1071,7 +1114,8 @@ function initCheckout() {
       checkoutForm.reset();
       document.getElementById('checkoutCountry').value = 'Cambodia';
 
-      confirmText.textContent = `Order #${json.data.id} placed — total $${json.data.total}. Thank you!`;
+      const discountNote = Number(json.data.discount_amount) > 0 ? ` (saved $${json.data.discount_amount} with your coupon)` : '';
+      confirmText.textContent = `Order #${json.data.id} placed — total $${json.data.total}${discountNote}. Thank you!`;
       confirmOverlay.classList.add('open');
 
       // Cart is now empty server-side — refresh the badge/panel to reflect that

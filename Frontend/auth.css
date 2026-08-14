@@ -908,3 +908,30 @@
   right: auto;
   flex-shrink: 0;
 }
+
+/* ───────── CHECKOUT COUPON ───────── */
+.checkout-coupon-row {
+  display: flex;
+  gap: 8px;
+}
+.checkout-coupon-row input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1.5px solid #ecdfd9;
+  border-radius: 8px;
+  outline: none;
+  text-transform: uppercase;
+}
+.checkout-coupon-row input:focus { border-color: #dda297; }
+
+.checkout-coupon-message {
+  font-size: 12.5px;
+  font-weight: 600;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+.checkout-coupon-message.success { color: #2e7d5b; background: #eef8f2; }
+.checkout-coupon-message.error   { color: #b03a2e; background: #fdf1ef; }
