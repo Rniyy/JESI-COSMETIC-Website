@@ -1660,6 +1660,7 @@ function initQuickView() {
     qvWish.classList.toggle('wished', !!wished);
 
     loadQvReviews(card.dataset.productId);
+    loadQvRelated(card.dataset.productId, category);
 
     overlay.classList.add('open');
     modal.classList.add('open');
@@ -1703,6 +1704,54 @@ function initQuickView() {
     } catch (err) {
       console.error('Failed to load reviews:', err);
       reviewsEl.innerHTML = '<p class="qv-reviews-empty">Could not load reviews.</p>';
+    }
+  }
+
+  async function loadQvRelated(productId, category) {
+    const relatedEl = document.getElementById('qvRelated');
+    if (!category) { relatedEl.innerHTML = ''; return; }
+    relatedEl.innerHTML = '';
+
+    try {
+      const res  = await fetch(`${API}/products?category=${encodeURIComponent(category)}&limit=6`, { credentials: 'include' });
+      const json = await res.json();
+      if (!json.success) return;
+
+      const related = json.data.filter(p => String(p.id) !== String(productId)).slice(0, 4);
+      if (related.length === 0) { relatedEl.innerHTML = ''; return; }
+
+      relatedEl.innerHTML = `
+        <h3 class="qv-related-title">You might also like</h3>
+        <div class="qv-related-row">
+          ${related.map(p => `
+            <div class="qv-related-card" data-product-id="${p.id}" data-product-name="${p.name}">
+              ${p.image_url
+                ? `<img class="qv-related-thumb" src="${p.image_url}" alt="${p.name}">`
+                : `<div class="qv-related-thumb-placeholder"></div>`}
+              <div class="qv-related-name">${p.name}</div>
+              <div class="qv-related-price">$${parseFloat(p.price).toFixed(0)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      relatedEl.querySelectorAll('.qv-related-card').forEach(el => {
+        el.addEventListener('click', () => {
+          // If this product's card already exists on the page (shop/devices/sets
+          // render every card in their category), just reopen Quick View on it.
+          const matchingCard = document.querySelector(`[data-product-id="${el.dataset.productId}"]`);
+          if (matchingCard) {
+            openModal(matchingCard);
+          } else {
+            // Otherwise (e.g. index.html's curated static grid) send them to
+            // the shop, pre-filtered to this product by name.
+            window.location.href = `shop.html?q=${encodeURIComponent(el.dataset.productName)}`;
+          }
+        });
+      });
+    } catch (err) {
+      console.error('Failed to load related products:', err);
+      relatedEl.innerHTML = '';
     }
   }
 
