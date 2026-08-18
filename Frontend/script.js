@@ -1661,6 +1661,7 @@ function initQuickView() {
 
     loadQvReviews(card.dataset.productId);
     loadQvRelated(card.dataset.productId, category);
+    loadQvGallery(card.dataset.productId, imgEl ? imgEl.getAttribute('src') : null);
 
     overlay.classList.add('open');
     modal.classList.add('open');
@@ -1753,6 +1754,38 @@ function initQuickView() {
       console.error('Failed to load related products:', err);
       relatedEl.innerHTML = '';
     }
+  }
+
+  async function loadQvGallery(productId, primaryImageUrl) {
+    const thumbsEl = document.getElementById('qvThumbnails');
+    thumbsEl.innerHTML = '';
+
+    let images = primaryImageUrl ? [primaryImageUrl] : [];
+    try {
+      const res  = await fetch(`${API}/products/${productId}/images`, { credentials: 'include' });
+      const json = await res.json();
+      if (json.success) {
+        images = images.concat(json.data.map(i => i.image_url));
+      }
+    } catch (err) {
+      console.error('Failed to load product gallery:', err);
+    }
+
+    // No point showing a strip of thumbnails for just one image
+    if (images.length <= 1) return;
+
+    thumbsEl.innerHTML = images.map((url, i) => `
+      <img class="qv-thumbnail ${i === 0 ? 'active' : ''}" src="${url}" data-url="${url}" alt="View ${i + 1}">
+    `).join('');
+
+    thumbsEl.querySelectorAll('.qv-thumbnail').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const mainImg = qvImg.querySelector('img');
+        if (mainImg) mainImg.src = thumb.dataset.url;
+        thumbsEl.querySelectorAll('.qv-thumbnail').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+      });
+    });
   }
 
   function closeModal() {

@@ -1,6 +1,33 @@
 const express = require('express');
 const router  = express.Router();
+const multer  = require('multer');
+const crypto  = require('crypto');
+const path    = require('path');
 const pool    = require('../db/pool');
+
+// ── Product gallery image upload config ──
+const ALLOWED_PRODUCT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_GALLERY_IMAGES = 6;
+
+const productImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads', 'products')),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${crypto.randomBytes(16).toString('hex')}${ext}`);
+  },
+});
+
+const uploadProductImages = multer({
+  storage: productImageStorage,
+  limits: { fileSize: MAX_PRODUCT_IMAGE_BYTES, files: MAX_GALLERY_IMAGES },
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.mimetype)) {
+      return cb(new Error('Only JPEG/PNG/WEBP/GIF images are allowed'));
+    }
+    cb(null, true);
+  },
+});
 
 /* ═══════════════════════════════════════════════════════════
    PRODUCTS  (admin sees everything, including out-of-stock)
@@ -124,6 +151,23 @@ router.put('/products/:id', async (req, res) => {
  * DELETE /api/admin/products/:id
  * Cascades to cart_items/wishlist_items via ON DELETE CASCADE in the schema.
  */
+/**
+ * DELETE /api/admin/products/images/:imageId
+ * Registered BEFORE /products/:id so "images" is never mistaken for a product id.
+ */
+router.delete('/products/images/:imageId', async (req, res) => {
+  try {
+    const [result] = await pool.query('DELETE FROM product_images WHERE id = ?', [req.params.imageId]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Image not found' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('DELETE /admin/products/images/:imageId error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete image' });
+  }
+});
+
 router.delete('/products/:id', async (req, res) => {
   try {
     const [result] = await pool.query('DELETE FROM products WHERE id = ?', [req.params.id]);
@@ -134,6 +178,57 @@ router.delete('/products/:id', async (req, res) => {
   } catch (err) {
     console.error('DELETE /admin/products/:id error:', err);
     res.status(500).json({ success: false, message: 'Failed to delete product' });
+  }
+});
+
+/**
+ * GET /api/admin/products/:id/images
+ */
+router.get('/products/:id/images', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, image_url, sort_order FROM product_images WHERE product_id = ? ORDER BY sort_order ASC, id ASC',
+      [req.params.id]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('GET /admin/products/:id/images error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch images' });
+  }
+});
+
+/**
+ * POST /api/admin/products/:id/images
+ * Uploads up to 6 gallery images at once (field name "images").
+ */
+router.post('/products/:id/images', uploadProductImages.array('images', MAX_GALLERY_IMAGES), async (req, res) => {
+  try {
+    const [[product]] = await pool.query('SELECT id FROM products WHERE id = ?', [req.params.id]);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    const [[{ maxOrder }]] = await pool.query(
+      'SELECT COALESCE(MAX(sort_order), -1) AS maxOrder FROM product_images WHERE product_id = ?',
+      [req.params.id]
+    );
+
+    let nextOrder = maxOrder + 1;
+    for (const file of req.files || []) {
+      await pool.query(
+        'INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)',
+        [req.params.id, `/uploads/products/${file.filename}`, nextOrder++]
+      );
+    }
+
+    const [rows] = await pool.query(
+      'SELECT id, image_url, sort_order FROM product_images WHERE product_id = ? ORDER BY sort_order ASC, id ASC',
+      [req.params.id]
+    );
+    res.status(201).json({ success: true, data: rows });
+  } catch (err) {
+    console.error('POST /admin/products/:id/images error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to upload images' });
   }
 });
 

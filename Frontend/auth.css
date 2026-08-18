@@ -991,3 +991,33 @@
   color: #b8695c;
   margin-top: 2px;
 }
+
+/* ───────── QUICK VIEW — MULTI-IMAGE GALLERY ───────── */
+/* .qv-media wraps the main image + thumbnail strip together, so it behaves
+   as a single flex item where .qv-img used to sit directly. If your
+   style.css targeted ".qv-body > .qv-img" specifically, let me know and
+   I'll adjust — this covers the common case of flex-based sizing. */
+.qv-media {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+.qv-media .qv-img { flex: 1; }
+
+.qv-thumbnails {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+.qv-thumbnail {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: #f4ece8;
+}
+.qv-thumbnail.active { border-color: #dda297; }

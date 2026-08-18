@@ -282,6 +282,17 @@
         <label>Description
           <textarea id="productDescription" rows="3"></textarea>
         </label>
+
+        <div class="admin-gallery-section" id="productGallerySection" style="display:none;">
+          <label style="margin-bottom:0;">Gallery Images (up to 6)</label>
+          <div class="admin-gallery-grid" id="productGalleryGrid"></div>
+          <label class="admin-gallery-upload-label">
+            <i class="ti ti-photo-plus"></i> Add images
+            <input type="file" id="productGalleryInput" accept="image/*" multiple hidden />
+          </label>
+        </div>
+        <p class="admin-gallery-hint" id="productGalleryHint" style="display:none;">Save the product first, then edit it again to add gallery images.</p>
+
         <p class="admin-form-error" id="productFormError" style="display:none;"></p>
         <div class="admin-modal-actions">
           <button type="button" class="admin-secondary-btn" id="productCancelBtn">Cancel</button>

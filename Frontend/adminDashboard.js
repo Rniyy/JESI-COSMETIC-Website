@@ -397,9 +397,15 @@ function openProductModal(productId = null) {
     document.getElementById('productBadge').value        = p.badge || '';
     document.getElementById('productStockQuantity').value = p.stock_quantity != null ? p.stock_quantity : 0;
     document.getElementById('productDescription').value  = p.description || '';
+
+    document.getElementById('productGallerySection').style.display = 'flex';
+    document.getElementById('productGalleryHint').style.display = 'none';
+    loadProductGallery(p.id);
   } else {
     title.textContent = 'Add product';
     document.getElementById('productId').value = '';
+    document.getElementById('productGallerySection').style.display = 'none';
+    document.getElementById('productGalleryHint').style.display = 'block';
   }
 
   overlay.classList.add('open');
@@ -407,6 +413,66 @@ function openProductModal(productId = null) {
 
 function closeProductModal() {
   document.getElementById('productModalOverlay').classList.remove('open');
+}
+
+async function loadProductGallery(productId) {
+  const grid = document.getElementById('productGalleryGrid');
+  grid.innerHTML = '<span style="font-size:12px; color:#a08e88;">Loading…</span>';
+  try {
+    const res  = await fetch(`${API}/admin/products/${productId}/images`, { credentials: 'include' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    renderProductGallery(productId, json.data);
+  } catch (err) {
+    console.error('Failed to load gallery:', err);
+    grid.innerHTML = '';
+  }
+}
+
+function renderProductGallery(productId, images) {
+  const grid = document.getElementById('productGalleryGrid');
+  grid.innerHTML = images.map(img => `
+    <div class="admin-gallery-thumb-wrap">
+      <img class="admin-gallery-thumb" src="${img.image_url}" alt="">
+      <button type="button" class="admin-gallery-remove" data-image-id="${img.id}">&times;</button>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.admin-gallery-remove').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await fetch(`${API}/admin/products/images/${btn.dataset.imageId}`, { method: 'DELETE', credentials: 'include' });
+      loadProductGallery(productId);
+    });
+  });
+}
+
+function initProductGalleryUpload() {
+  const input = document.getElementById('productGalleryInput');
+  input.addEventListener('change', async () => {
+    const productId = document.getElementById('productId').value;
+    if (!productId || !input.files.length) return;
+
+    const formData = new FormData();
+    [...input.files].slice(0, 6).forEach(file => formData.append('images', file));
+
+    try {
+      const res  = await fetch(`${API}/admin/products/${productId}/images`, {
+        method: 'POST', credentials: 'include', body: formData,
+      });
+      const json = await res.json();
+      if (!json.success) {
+        alert(json.message || 'Could not upload images');
+        return;
+      }
+      renderProductGallery(productId, json.data);
+      loadProducts(); // refresh main list in case anything else depends on it
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong uploading images');
+    } finally {
+      input.value = '';
+    }
+  });
 }
 
 async function saveProduct(e) {
@@ -895,6 +961,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initProductModal();
   initProductExport();
   initCouponModal();
+  initProductGalleryUpload();
   initOrderModal();
   initOrderFilters();
   loadProducts();

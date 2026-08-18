@@ -38,6 +38,7 @@ app.use(cors({
 // Review photos/videos land in backend/uploads/reviews — create it if missing
 const uploadsDir = path.join(__dirname, 'uploads', 'reviews');
 fs.mkdirSync(uploadsDir, { recursive: true });
+fs.mkdirSync(path.join(__dirname, 'uploads', 'products'), { recursive: true });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(express.json());

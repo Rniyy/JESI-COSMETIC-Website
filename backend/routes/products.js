@@ -93,4 +93,21 @@ router.get('/:id/reviews', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/products/:id/images
+ * Public — gallery images beyond the primary image_url on the product row.
+ */
+router.get('/:id/images', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, image_url, sort_order FROM product_images WHERE product_id = ? ORDER BY sort_order ASC, id ASC',
+      [req.params.id]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error('GET /products/:id/images error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch product images' });
+  }
+});
+
 module.exports = router;
