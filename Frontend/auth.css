@@ -993,27 +993,31 @@
 }
 
 /* ───────── QUICK VIEW — MULTI-IMAGE GALLERY ───────── */
-/* .qv-media wraps the main image + thumbnail strip together, so it behaves
-   as a single flex item where .qv-img used to sit directly. If your
-   style.css targeted ".qv-body > .qv-img" specifically, let me know and
-   I'll adjust — this covers the common case of flex-based sizing. */
-.qv-media {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 1;
-}
-.qv-media .qv-img { flex: 1; }
+/* Thumbnails are appended by JS as a child INSIDE #qvImg itself (not a
+   sibling in qv-body), then positioned as an absolute overlay at the
+   bottom of the image. This deliberately avoids restructuring qv-body's
+   direct children, since style.css may size .qv-img via a direct-child
+   selector that a wrapper div would break. */
+.qv-img { position: relative; }
 
-.qv-thumbnails {
+.qv-thumbnails-overlay {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
+  z-index: 3;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
 }
 .qv-thumbnail {
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
   object-fit: cover;
   border: 2px solid transparent;
   cursor: pointer;

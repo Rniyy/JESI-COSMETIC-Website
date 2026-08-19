@@ -1757,8 +1757,9 @@ function initQuickView() {
   }
 
   async function loadQvGallery(productId, primaryImageUrl) {
-    const thumbsEl = document.getElementById('qvThumbnails');
-    thumbsEl.innerHTML = '';
+    // Remove any thumbnail strip left over from a previous product
+    // (qvImg itself was already fully cleared/rebuilt before this runs).
+    qvImg.querySelector('.qv-thumbnails-overlay')?.remove();
 
     let images = primaryImageUrl ? [primaryImageUrl] : [];
     try {
@@ -1774,15 +1775,18 @@ function initQuickView() {
     // No point showing a strip of thumbnails for just one image
     if (images.length <= 1) return;
 
-    thumbsEl.innerHTML = images.map((url, i) => `
+    const overlay = document.createElement('div');
+    overlay.className = 'qv-thumbnails-overlay';
+    overlay.innerHTML = images.map((url, i) => `
       <img class="qv-thumbnail ${i === 0 ? 'active' : ''}" src="${url}" data-url="${url}" alt="View ${i + 1}">
     `).join('');
+    qvImg.appendChild(overlay);
 
-    thumbsEl.querySelectorAll('.qv-thumbnail').forEach(thumb => {
+    overlay.querySelectorAll('.qv-thumbnail').forEach(thumb => {
       thumb.addEventListener('click', () => {
         const mainImg = qvImg.querySelector('img');
         if (mainImg) mainImg.src = thumb.dataset.url;
-        thumbsEl.querySelectorAll('.qv-thumbnail').forEach(t => t.classList.remove('active'));
+        overlay.querySelectorAll('.qv-thumbnail').forEach(t => t.classList.remove('active'));
         thumb.classList.add('active');
       });
     });
