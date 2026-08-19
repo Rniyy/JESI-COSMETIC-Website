@@ -1,4 +1,5 @@
 const API = 'http://localhost:3000/api';
+const API_ORIGIN = API.replace(/\/api\/?$/, ''); // for uploaded file URLs like /uploads/products/...
 
 let allProducts = [];
 let allCoupons   = [];
@@ -433,7 +434,7 @@ function renderProductGallery(productId, images) {
   const grid = document.getElementById('productGalleryGrid');
   grid.innerHTML = images.map(img => `
     <div class="admin-gallery-thumb-wrap">
-      <img class="admin-gallery-thumb" src="${img.image_url}" alt="">
+      <img class="admin-gallery-thumb" src="${API_ORIGIN}${img.image_url}" alt="">
       <button type="button" class="admin-gallery-remove" data-image-id="${img.id}">&times;</button>
     </div>
   `).join('');

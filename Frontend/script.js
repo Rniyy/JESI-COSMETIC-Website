@@ -1766,7 +1766,7 @@ function initQuickView() {
       const res  = await fetch(`${API}/products/${productId}/images`, { credentials: 'include' });
       const json = await res.json();
       if (json.success) {
-        images = images.concat(json.data.map(i => i.image_url));
+        images = images.concat(json.data.map(i => `${API_ORIGIN}${i.image_url}`));
       }
     } catch (err) {
       console.error('Failed to load product gallery:', err);
