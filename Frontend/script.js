@@ -23,10 +23,30 @@ function buildProductCardHTML(p) {
   const ratingText = p.rating ? `${parseFloat(p.rating).toFixed(1)} (${p.review_count || 0})` : '';
   const outOfStock = !p.in_stock || p.stock_quantity <= 0;
 
+  // Primary image is a plain filename relative to the frontend; gallery
+  // images come back as backend-relative paths and need the origin prefix.
+  const allImages = [
+    p.image_url || null,
+    ...(p.gallery_images || []).map(url => `${API_ORIGIN}${url}`),
+  ].filter(Boolean);
+
+  const imageContentHTML = allImages.length > 1
+    ? `
+      <div class="product-img-carousel">
+        <div class="product-img-track">
+          ${allImages.map(url => `<img src="${url}" alt="${p.name}" class="product-img-slide">`).join('')}
+        </div>
+        <div class="product-img-dots">
+          ${allImages.map((_, i) => `<span class="product-img-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}
+        </div>
+      </div>
+    `
+    : (allImages[0] ? `<img src="${allImages[0]}" alt="${p.name}">` : '');
+
   return `
     <div class="product-card ${outOfStock ? 'out-of-stock' : ''}" data-category="${p.category}" data-name="${p.name}" data-price="${p.price}" data-product-id="${p.id}">
       <div class="product-img ${p.image_class || ''}">
-        ${p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : ''}
+        ${imageContentHTML}
         <button class="wish-btn" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
         ${badgeHTML}
         ${outOfStock ? `<div class="out-of-stock-overlay"><span>Out of Stock</span></div>` : ''}
@@ -63,10 +83,41 @@ async function renderShopProducts() {
     if (!json.success) throw new Error(json.message);
 
     grid.innerHTML = json.data.map(buildProductCardHTML).join('');
+    initProductCardCarousels(grid);
   } catch (err) {
     console.error('Failed to load products:', err);
     grid.innerHTML = '<p class="products-loading">Could not load products — check your connection and try refreshing.</p>';
   }
+}
+
+/**
+ * Wires up the swipeable image strip on any product cards that have more
+ * than one image. Native scroll-snap handles touch swipe on its own —
+ * this just keeps the dot indicators in sync and makes them clickable.
+ */
+function initProductCardCarousels(scope) {
+  scope.querySelectorAll('.product-img-carousel').forEach(carousel => {
+    const track = carousel.querySelector('.product-img-track');
+    const dots  = carousel.querySelectorAll('.product-img-dot');
+    if (!track || dots.length === 0) return;
+
+    let scrollTimer;
+    track.addEventListener('scroll', () => {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        const index = Math.round(track.scrollLeft / track.clientWidth);
+        dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+      }, 80);
+    });
+
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+        dots.forEach((d, di) => d.classList.toggle('active', di === i));
+      });
+    });
+  });
 }
 
 function initSlider() {
@@ -1801,7 +1852,7 @@ function initQuickView() {
 
   document.querySelectorAll('.product-card').forEach(card => {
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.wish-btn') || e.target.closest('.add-cart')) return;
+      if (e.target.closest('.wish-btn') || e.target.closest('.add-cart') || e.target.closest('.product-img-dots') || e.target.closest('.product-img-track')) return;
       openModal(card);
     });
   });

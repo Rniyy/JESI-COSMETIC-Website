@@ -30,6 +30,25 @@ router.get('/', async (req, res) => {
     params.push(cap);
 
     const [rows] = await pool.query(sql, params);
+
+    // Attach gallery images (if any) so cards can render a swipeable strip
+    // without a separate request per product.
+    if (rows.length > 0) {
+      const ids = rows.map(r => r.id);
+      const [images] = await pool.query(
+        'SELECT product_id, image_url FROM product_images WHERE product_id IN (?) ORDER BY sort_order ASC, id ASC',
+        [ids]
+      );
+      const galleryByProduct = {};
+      for (const img of images) {
+        if (!galleryByProduct[img.product_id]) galleryByProduct[img.product_id] = [];
+        galleryByProduct[img.product_id].push(img.image_url);
+      }
+      for (const row of rows) {
+        row.gallery_images = galleryByProduct[row.id] || [];
+      }
+    }
+
     res.json({ success: true, data: rows });
   } catch (err) {
     console.error('GET /products error:', err);
