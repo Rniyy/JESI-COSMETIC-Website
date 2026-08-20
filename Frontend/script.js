@@ -34,8 +34,10 @@ function buildProductCardHTML(p) {
     ? `
       <div class="product-img-carousel">
         <div class="product-img-track">
-          ${allImages.map(url => `<img src="${url}" alt="${p.name}" class="product-img-slide">`).join('')}
+          ${allImages.map((url, i) => `<img src="${url}" alt="${p.name}" class="product-img-slide ${i === 0 ? 'active' : ''}">`).join('')}
         </div>
+        <button class="product-img-nav prev" aria-label="Previous image" type="button"><i class="ti ti-chevron-left"></i></button>
+        <button class="product-img-nav next" aria-label="Next image" type="button"><i class="ti ti-chevron-right"></i></button>
         <div class="product-img-dots">
           ${allImages.map((_, i) => `<span class="product-img-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}
         </div>
@@ -97,26 +99,23 @@ async function renderShopProducts() {
  */
 function initProductCardCarousels(scope) {
   scope.querySelectorAll('.product-img-carousel').forEach(carousel => {
-    const track = carousel.querySelector('.product-img-track');
-    const dots  = carousel.querySelectorAll('.product-img-dot');
-    if (!track || dots.length === 0) return;
+    const slides   = carousel.querySelectorAll('.product-img-slide');
+    const dots     = carousel.querySelectorAll('.product-img-dot');
+    const prevBtn  = carousel.querySelector('.product-img-nav.prev');
+    const nextBtn  = carousel.querySelector('.product-img-nav.next');
+    if (slides.length === 0) return;
 
-    let scrollTimer;
-    track.addEventListener('scroll', () => {
-      clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => {
-        const index = Math.round(track.scrollLeft / track.clientWidth);
-        dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
-      }, 80);
-    });
+    let current = 0;
 
-    dots.forEach((dot, i) => {
-      dot.addEventListener('click', (e) => {
-        e.stopPropagation();
-        track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
-        dots.forEach((d, di) => d.classList.toggle('active', di === i));
-      });
-    });
+    function goTo(index) {
+      current = (index + slides.length) % slides.length;
+      slides.forEach((s, i) => s.classList.toggle('active', i === current));
+      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); goTo(current - 1); });
+    if (nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); goTo(current + 1); });
+    dots.forEach((dot, i) => dot.addEventListener('click', (e) => { e.stopPropagation(); goTo(i); }));
   });
 }
 
@@ -1852,7 +1851,7 @@ function initQuickView() {
 
   document.querySelectorAll('.product-card').forEach(card => {
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.wish-btn') || e.target.closest('.add-cart') || e.target.closest('.product-img-dots') || e.target.closest('.product-img-track')) return;
+      if (e.target.closest('.wish-btn') || e.target.closest('.add-cart') || e.target.closest('.product-img-dots') || e.target.closest('.product-img-nav')) return;
       openModal(card);
     });
   });
