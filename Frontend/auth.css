@@ -992,114 +992,50 @@
   margin-top: 2px;
 }
 
-/* ───────── QUICK VIEW — MULTI-IMAGE GALLERY ───────── */
-/* Thumbnails are appended by JS as a child INSIDE #qvImg itself (not a
-   sibling in qv-body), then positioned as an absolute overlay at the
-   bottom of the image. This deliberately avoids restructuring qv-body's
-   direct children, since style.css may size .qv-img via a direct-child
-   selector that a wrapper div would break. */
+/* ───────── QUICK VIEW — GALLERY NAVIGATION (< > arrows) ───────── */
+/* Controls are appended by JS as a child INSIDE #qvImg itself (not a
+   sibling in qv-body), so qv-body's original two-child layout never
+   changes regardless of how many images a product has. */
 .qv-img { position: relative; }
 
-.qv-thumbnails-overlay {
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  z-index: 3;
-  padding: 4px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 10px;
-  backdrop-filter: blur(4px);
-}
-.qv-thumbnail {
-  width: 44px;
-  height: 44px;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 2px solid transparent;
-  cursor: pointer;
-  flex-shrink: 0;
-  background: #f4ece8;
-}
-.qv-thumbnail.active { border-color: #dda297; }
-
-/* ───────── PRODUCT CARD — IMAGE CAROUSEL (< > arrows) ───────── */
-.product-img-carousel {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-.product-img-track {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-.product-img-slide {
+.qv-gallery-controls {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease;
-}
-.product-img-slide.active {
-  opacity: 1;
-  visibility: visible;
+  pointer-events: none;
+  z-index: 3;
 }
 
-.product-img-nav {
+.qv-gallery-nav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   color: #3a2e2b;
-  font-size: 13px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 3;
-  opacity: 0;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  pointer-events: auto;
+  box-shadow: 0 2px 8px rgba(58, 46, 43, 0.15);
 }
-.product-img-carousel:hover .product-img-nav { opacity: 1; }
-.product-img-nav:hover { background: #fff; }
-.product-img-nav.prev { left: 6px; }
-.product-img-nav.next { right: 6px; }
+.qv-gallery-nav:hover { background: #fff; }
+.qv-gallery-nav.prev { left: 10px; }
+.qv-gallery-nav.next { right: 10px; }
 
-/* Always show nav buttons on touch devices, since there's no hover state */
-@media (hover: none) {
-  .product-img-nav { opacity: 1; }
-}
-
-.product-img-dots {
+.qv-gallery-counter {
   position: absolute;
-  bottom: 8px;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  gap: 5px;
-  z-index: 2;
-}
-.product-img-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  transition: width 0.15s ease, background 0.15s ease;
-}
-.product-img-dot.active {
-  background: #fff;
-  width: 16px;
-  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
 }

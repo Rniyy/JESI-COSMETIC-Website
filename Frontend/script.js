@@ -23,27 +23,7 @@ function buildProductCardHTML(p) {
   const ratingText = p.rating ? `${parseFloat(p.rating).toFixed(1)} (${p.review_count || 0})` : '';
   const outOfStock = !p.in_stock || p.stock_quantity <= 0;
 
-  // Primary image is a plain filename relative to the frontend; gallery
-  // images come back as backend-relative paths and need the origin prefix.
-  const allImages = [
-    p.image_url || null,
-    ...(p.gallery_images || []).map(url => `${API_ORIGIN}${url}`),
-  ].filter(Boolean);
-
-  const imageContentHTML = allImages.length > 1
-    ? `
-      <div class="product-img-carousel">
-        <div class="product-img-track">
-          ${allImages.map((url, i) => `<img src="${url}" alt="${p.name}" class="product-img-slide ${i === 0 ? 'active' : ''}">`).join('')}
-        </div>
-        <button class="product-img-nav prev" aria-label="Previous image" type="button"><i class="ti ti-chevron-left"></i></button>
-        <button class="product-img-nav next" aria-label="Next image" type="button"><i class="ti ti-chevron-right"></i></button>
-        <div class="product-img-dots">
-          ${allImages.map((_, i) => `<span class="product-img-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}
-        </div>
-      </div>
-    `
-    : (allImages[0] ? `<img src="${allImages[0]}" alt="${p.name}">` : '');
+  const imageContentHTML = p.image_url ? `<img src="${p.image_url}" alt="${p.name}">` : '';
 
   return `
     <div class="product-card ${outOfStock ? 'out-of-stock' : ''}" data-category="${p.category}" data-name="${p.name}" data-price="${p.price}" data-product-id="${p.id}">
@@ -85,7 +65,6 @@ async function renderShopProducts() {
     if (!json.success) throw new Error(json.message);
 
     grid.innerHTML = json.data.map(buildProductCardHTML).join('');
-    initProductCardCarousels(grid);
   } catch (err) {
     console.error('Failed to load products:', err);
     grid.innerHTML = '<p class="products-loading">Could not load products — check your connection and try refreshing.</p>';
@@ -97,28 +76,6 @@ async function renderShopProducts() {
  * than one image. Native scroll-snap handles touch swipe on its own —
  * this just keeps the dot indicators in sync and makes them clickable.
  */
-function initProductCardCarousels(scope) {
-  scope.querySelectorAll('.product-img-carousel').forEach(carousel => {
-    const slides   = carousel.querySelectorAll('.product-img-slide');
-    const dots     = carousel.querySelectorAll('.product-img-dot');
-    const prevBtn  = carousel.querySelector('.product-img-nav.prev');
-    const nextBtn  = carousel.querySelector('.product-img-nav.next');
-    if (slides.length === 0) return;
-
-    let current = 0;
-
-    function goTo(index) {
-      current = (index + slides.length) % slides.length;
-      slides.forEach((s, i) => s.classList.toggle('active', i === current));
-      dots.forEach((d, i) => d.classList.toggle('active', i === current));
-    }
-
-    if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); goTo(current - 1); });
-    if (nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); goTo(current + 1); });
-    dots.forEach((dot, i) => dot.addEventListener('click', (e) => { e.stopPropagation(); goTo(i); }));
-  });
-}
-
 function initSlider() {
   const hero = document.getElementById('hero');
   if (!hero) return;
@@ -1807,9 +1764,9 @@ function initQuickView() {
   }
 
   async function loadQvGallery(productId, primaryImageUrl) {
-    // Remove any thumbnail strip left over from a previous product
+    // Remove any gallery controls left over from a previous product
     // (qvImg itself was already fully cleared/rebuilt before this runs).
-    qvImg.querySelector('.qv-thumbnails-overlay')?.remove();
+    qvImg.querySelector('.qv-gallery-controls')?.remove();
 
     let images = primaryImageUrl ? [primaryImageUrl] : [];
     try {
@@ -1822,24 +1779,30 @@ function initQuickView() {
       console.error('Failed to load product gallery:', err);
     }
 
-    // No point showing a strip of thumbnails for just one image
+    // No point showing gallery controls for just one image
     if (images.length <= 1) return;
 
-    const overlay = document.createElement('div');
-    overlay.className = 'qv-thumbnails-overlay';
-    overlay.innerHTML = images.map((url, i) => `
-      <img class="qv-thumbnail ${i === 0 ? 'active' : ''}" src="${url}" data-url="${url}" alt="View ${i + 1}">
-    `).join('');
-    qvImg.appendChild(overlay);
+    let current = 0;
+    const mainImg = qvImg.querySelector('img');
 
-    overlay.querySelectorAll('.qv-thumbnail').forEach(thumb => {
-      thumb.addEventListener('click', () => {
-        const mainImg = qvImg.querySelector('img');
-        if (mainImg) mainImg.src = thumb.dataset.url;
-        overlay.querySelectorAll('.qv-thumbnail').forEach(t => t.classList.remove('active'));
-        thumb.classList.add('active');
-      });
-    });
+    const controls = document.createElement('div');
+    controls.className = 'qv-gallery-controls';
+    controls.innerHTML = `
+      <button class="qv-gallery-nav prev" type="button" aria-label="Previous image"><i class="ti ti-chevron-left"></i></button>
+      <button class="qv-gallery-nav next" type="button" aria-label="Next image"><i class="ti ti-chevron-right"></i></button>
+      <div class="qv-gallery-counter"><span class="qv-gallery-counter-current">1</span> / ${images.length}</div>
+    `;
+    qvImg.appendChild(controls);
+
+    const counterEl = controls.querySelector('.qv-gallery-counter-current');
+    function goTo(index) {
+      current = (index + images.length) % images.length;
+      if (mainImg) mainImg.src = images[current];
+      counterEl.textContent = current + 1;
+    }
+
+    controls.querySelector('.prev').addEventListener('click', () => goTo(current - 1));
+    controls.querySelector('.next').addEventListener('click', () => goTo(current + 1));
   }
 
   function closeModal() {
@@ -1851,7 +1814,7 @@ function initQuickView() {
 
   document.querySelectorAll('.product-card').forEach(card => {
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.wish-btn') || e.target.closest('.add-cart') || e.target.closest('.product-img-dots') || e.target.closest('.product-img-nav')) return;
+      if (e.target.closest('.wish-btn') || e.target.closest('.add-cart')) return;
       openModal(card);
     });
   });
