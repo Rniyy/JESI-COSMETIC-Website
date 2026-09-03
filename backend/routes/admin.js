@@ -4,6 +4,7 @@ const multer  = require('multer');
 const crypto  = require('crypto');
 const path    = require('path');
 const pool    = require('../db/pool');
+const { sendBackInStockEmail } = require('../utils/mailer');
 
 // ── Product gallery image upload config ──
 const ALLOWED_PRODUCT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -125,7 +126,10 @@ router.put('/products/:id', async (req, res) => {
     // wishlisted it.
     if (before && Number(before.stock_quantity) <= 0 && qty > 0) {
       const [wishlisters] = await pool.query(
-        'SELECT DISTINCT user_id FROM wishlist_items WHERE product_id = ? AND user_id IS NOT NULL',
+        `SELECT DISTINCT w.user_id, u.email
+         FROM wishlist_items w
+         JOIN users u ON u.id = w.user_id
+         WHERE w.product_id = ? AND w.user_id IS NOT NULL`,
         [req.params.id]
       );
       for (const w of wishlisters) {
@@ -133,6 +137,9 @@ router.put('/products/:id', async (req, res) => {
           `INSERT INTO notifications (user_id, type, product_id, message) VALUES (?, 'back_in_stock', ?, ?)`,
           [w.user_id, req.params.id, `"${name}" is back in stock!`]
         );
+        // Best-effort email alongside the in-app notification — sendBackInStockEmail
+        // never throws, so a mail failure won't block the stock update itself.
+        sendBackInStockEmail(w.email, name, req.params.id);
       }
       if (wishlisters.length > 0) {
         console.log(`[BACK IN STOCK] Notified ${wishlisters.length} wishlister(s) about "${name}"`);

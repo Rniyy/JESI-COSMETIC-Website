@@ -5,6 +5,7 @@ const crypto   = require('crypto');
 const pool     = require('../db/pool');
 const { issueToken, clearToken, requireAuth } = require('../middleware/authMiddleware');
 const { mergeGuestCartAndWishlist } = require('../utils/mergeGuestData');
+const { sendPasswordResetEmail } = require('../utils/mailer');
 
 const RESET_TOKEN_TTL_MS = 1000 * 60 * 30; // 30 minutes
 
@@ -113,9 +114,7 @@ router.get('/me', async (req, res) => {
 
 /**
  * POST /api/auth/forgot-password  { email }
- * Always responds success (don't leak which emails exist). Since there's no
- * email service wired up yet, the reset link is logged to the server console
- * instead — swap this for a real send once you add Nodemailer/Resend/etc.
+ * Always responds success (don't leak which emails exist).
  */
 router.post('/forgot-password', async (req, res) => {
   try {
@@ -124,7 +123,7 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ success: false, message: 'email is required' });
     }
 
-    const [[user]] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    const [[user]] = await pool.query('SELECT id, email FROM users WHERE email = ?', [email]);
 
     if (user) {
       const rawToken  = crypto.randomBytes(32).toString('hex');
@@ -136,13 +135,13 @@ router.post('/forgot-password', async (req, res) => {
         [user.id, tokenHash, expiresAt]
       );
 
-      const resetLink = `http://localhost:3000/reset-password.html?token=${rawToken}`;
-      console.log('\n[PASSWORD RESET] No email service configured yet — link for testing:');
-      console.log(resetLink + '\n');
+      // Fire-and-forget-ish, but awaited so send failures get logged; never
+      // blocks/breaks the response either way (sendMail never throws).
+      await sendPasswordResetEmail(user.email, rawToken);
     }
 
     // Same response whether or not the email exists, on purpose.
-    res.json({ success: true, message: 'If that email is registered, a reset link has been generated (check the server console for now).' });
+    res.json({ success: true, message: 'If that email is registered, a reset link has been sent.' });
   } catch (err) {
     console.error('POST /auth/forgot-password error:', err);
     res.status(500).json({ success: false, message: 'Failed to process request' });
