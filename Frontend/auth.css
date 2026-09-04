@@ -693,11 +693,14 @@
 /* ───────── QUICK VIEW — PRODUCT REVIEWS ───────── */
 .qv-reviews {
   margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #f0e4de;
+  padding: 16px;
+  border: 1.5px solid #f0e4de;
+  border-radius: 14px;
+  background: #fffdfb;
   max-height: 220px;
   overflow-y: auto;
 }
+.qv-reviews:empty { display: none; }
 .qv-reviews-title {
   font-size: 14px;
   font-weight: 700;
@@ -938,10 +941,13 @@
 
 /* ───────── QUICK VIEW — YOU MIGHT ALSO LIKE ───────── */
 .qv-related {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #f0e4de;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1.5px solid #f0e4de;
+  border-radius: 14px;
+  background: #fffdfb;
 }
+.qv-related:empty { display: none; margin-top: 0; }
 .qv-related-title {
   font-size: 14px;
   font-weight: 700;
