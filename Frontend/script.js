@@ -1612,6 +1612,28 @@ function initQuickView() {
   let activeCard = null;
   let qty = 1;
 
+  // ── Sticky image: square when the modal opens, shrinks into a short
+  // banner as the user scrolls the details underneath. ──
+  const IMG_MIN_HEIGHT = 220; // px — how short the banner gets at full shrink
+  let qvImgSquareHeight = 0;
+
+  function setQvImgSquare() {
+    qvImgSquareHeight = qvImg.clientWidth; // square = height matches width
+    qvImg.style.height = qvImgSquareHeight + 'px';
+  }
+
+  function handleQvScroll() {
+    if (!qvImgSquareHeight) return;
+    const minHeight = Math.min(IMG_MIN_HEIGHT, qvImgSquareHeight);
+    const newHeight = Math.max(minHeight, qvImgSquareHeight - modal.scrollTop);
+    qvImg.style.height = newHeight + 'px';
+  }
+
+  modal.addEventListener('scroll', handleQvScroll, { passive: true });
+  window.addEventListener('resize', () => {
+    if (modal.classList.contains('open')) setQvImgSquare();
+  });
+
   function openModal(card) {
     activeCard = card;
     qty = 1;
@@ -1673,6 +1695,8 @@ function initQuickView() {
     overlay.classList.add('open');
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
+    modal.scrollTop = 0;
+    setQvImgSquare();
   }
 
   async function loadQvReviews(productId) {

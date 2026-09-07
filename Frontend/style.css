@@ -1561,17 +1561,18 @@ body {
 }
 
 .qv-img {
-  position: relative;
+  position: sticky;
+  top: 0;
   width: 100%;
-  height: 62vh;
-  min-height: 340px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 0;
+  z-index: 5;
   font-size: 48px;
   color: rgba(0,0,0,0.15);
+  /* height is set inline by JS: square on open, shrinking into a short
+     banner as the modal is scrolled (see initQuickView in script.js) */
 }
 .qv-img img {
   position: absolute;
@@ -1676,7 +1677,6 @@ body {
 .qv-wish:hover { color: #c09080; border-color: #c09080; }
 
 @media (max-width: 720px) {
-  .qv-img { height: 42vh; min-height: 260px; }
   .qv-info { padding: 24px 20px 40px; }
   .qv-name { font-size: 21px; }
 }
