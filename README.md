@@ -16,6 +16,7 @@ A full-stack e-commerce web application for a K-beauty (Medicube) skincare store
 | Guest sessions | `uuid` + `cookie-parser` |
 | Charts | Chart.js, bundled locally as `chart.umd.js` (not CDN-dependent) |
 | Desktop wrapper | Electron 42 (optional — `Frontend/main.js`) |
+| Email | `nodemailer` over SMTP (password reset + back-in-stock alerts) |
 
 ---
 
@@ -56,7 +57,8 @@ JESI-COSMETIC-Website/
 │   │   ├── admin.js
 │   │   └── notifications.js
 │   ├── utils/
-│   │   └── mergeGuestData.js      # Merges guest cart/wishlist into account on login
+│   │   ├── mergeGuestData.js      # Merges guest cart/wishlist into account on login
+│   │   └── mailer.js              # Nodemailer/SMTP — password reset + back-in-stock emails
 │   └── uploads/reviews/           # Uploaded review photos/videos (gitignored)
 │
 └── Frontend/
@@ -68,6 +70,7 @@ JESI-COSMETIC-Website/
     ├── sets.html                  # Sets category (DB-filtered)
     ├── about.html                 # Static informational page
     ├── admin.html                 # Admin dashboard
+    ├── reset-password.html        # Landing page for the password-reset email link
     ├── script.js                  # Shared shop logic: auth, cart, checkout, wishlist,
     │                               #   notifications, quick view, search, filters
     ├── adminDashboard.js          # Admin dashboard logic
@@ -118,7 +121,18 @@ DB_PASSWORD=yourpassword
 DB_NAME=jesi_cosmetic
 CORS_ORIGINS=null,http://localhost:3000
 JWT_SECRET=<generate with: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))">
+
+# Email — optional. Without these, emails are logged to the console instead
+# of sent, so the app still works fully in local dev.
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASSWORD=
+MAIL_FROM="JESI-COSMETIC <no-reply@jesi-cosmetic.local>"
+FRONTEND_URL=http://localhost:8080
 ```
+See `backend/.env.example` for provider-specific setup notes (Gmail, Mailtrap, SendGrid).
 
 ### 6. Load the database schema, in this exact order
 ```bash
@@ -167,7 +181,7 @@ docker exec -i jesi-mysql mysql -u root -p<password> jesi_cosmetic -e "UPDATE us
 ### Shopping
 - Product cards render dynamically from the database on `shop.html`/`devices.html`/`sets.html` — admin edits reflect immediately
 - Out-of-stock products show a dark overlay and disabled "Add to cart"
-- Quick View modal with full product detail + reviews
+- Quick View modal — full-screen, image full-bleed across the top with product details, reviews, and related items stacked below
 - Wishlist works for guests (session-based) and logged-in users
 - Cart **requires login** — enforced both client- and server-side
 
@@ -175,7 +189,7 @@ docker exec -i jesi-mysql mysql -u root -p<password> jesi_cosmetic -e "UPDATE us
 - Register / login / logout, bcrypt-hashed passwords, JWT session
 - Guest cart & wishlist merge into the account automatically on login
 - Edit profile and change password (current password required)
-- Password reset (reset link currently logs to the server console — no email service wired up)
+- Password reset — emails a real reset link (via SMTP; falls back to a console log if SMTP isn't configured) to `Frontend/reset-password.html`
 - Saved shipping addresses, reused at checkout or replaced with a new one
 
 ### Checkout & Orders
@@ -195,7 +209,7 @@ docker exec -i jesi-mysql mysql -u root -p<password> jesi_cosmetic -e "UPDATE us
 - Displayed in Quick View with reviewer first name, stars, comment, date, and media thumbnails
 
 ### Notifications
-- Wishlisting an out-of-stock item, then an admin restocking it, triggers an in-app notification
+- Wishlisting an out-of-stock item, then an admin restocking it, triggers an in-app notification **and** an email (via SMTP; falls back to a console log if SMTP isn't configured)
 - Bell icon in the navbar with an unread-count badge
 
 ### Admin Dashboard (`admin.html`)
@@ -225,6 +239,6 @@ Role-gated (`role: 'admin'`), enforced by frontend redirect and a backend middle
 ## Known Limitations
 
 - **No real payment gateway** — "Pay Now" is a mocked confirmation gated behind a 4-digit PIN, not an actual payment processor.
-- **No real email service** — password reset links and back-in-stock notices log to the server console rather than sending real emails.
+- **Email requires SMTP configuration** — without `SMTP_HOST`/`SMTP_USER`/`SMTP_PASSWORD` set in `backend/.env`, password reset links and back-in-stock notices log to the server console instead of sending. See `backend/.env.example`.
 - **`about.html`** is a static page that doesn't share the cart/wishlist/auth/notification panels the other pages use.
 - **Electron desktop build** is optional and separate from normal browser usage; some managed/school computers may block its binary via Application Control policies — this doesn't affect the website itself.
