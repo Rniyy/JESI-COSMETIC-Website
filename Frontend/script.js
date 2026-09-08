@@ -1599,6 +1599,8 @@ function initQuickView() {
   const qvInc     = document.getElementById('qvInc');
   const qvAddCart = document.getElementById('qvAddCart');
   const qvWish    = document.getElementById('qvWish');
+  const qvBadgeChip = document.getElementById('qvBadgeChip');
+  const qvBrand     = document.getElementById('qvBrand');
 
   const descByCategory = {
     serums:       'A lightweight, fast-absorbing serum formulated to target visible concerns with consistent daily use — layer it under your moisturizer morning or night.',
@@ -1612,28 +1614,6 @@ function initQuickView() {
   let activeCard = null;
   let qty = 1;
 
-  // ── Sticky image: square when the modal opens, shrinks into a short
-  // banner as the user scrolls the details underneath. ──
-  const IMG_MIN_HEIGHT = 220; // px — how short the banner gets at full shrink
-  let qvImgSquareHeight = 0;
-
-  function setQvImgSquare() {
-    qvImgSquareHeight = qvImg.clientWidth; // square = height matches width
-    qvImg.style.height = qvImgSquareHeight + 'px';
-  }
-
-  function handleQvScroll() {
-    if (!qvImgSquareHeight) return;
-    const minHeight = Math.min(IMG_MIN_HEIGHT, qvImgSquareHeight);
-    const newHeight = Math.max(minHeight, qvImgSquareHeight - modal.scrollTop);
-    qvImg.style.height = newHeight + 'px';
-  }
-
-  modal.addEventListener('scroll', handleQvScroll, { passive: true });
-  window.addEventListener('resize', () => {
-    if (modal.classList.contains('open')) setQvImgSquare();
-  });
-
   function openModal(card) {
     activeCard = card;
     qty = 1;
@@ -1645,13 +1625,52 @@ function initQuickView() {
     const imgWrap  = card.querySelector('.product-img');
     const starsHTML = card.querySelector('.prod-stars')?.innerHTML || '';
     const priceHTML = card.querySelector('.prod-price')?.innerHTML || (card.dataset.price ? `$${card.dataset.price}` : '');
+    const brandText = card.querySelector('.prod-brand')?.textContent.trim() || 'Medicube';
     const badgeEl  = card.querySelector('.prod-badge');
     const wished   = card.querySelector('.wish-btn')?.classList.contains('wished');
 
-    qvName.textContent = name;
-    qvStars.innerHTML  = starsHTML;
-    qvPrice.innerHTML  = priceHTML;
+    qvName.textContent  = name;
+    qvStars.innerHTML   = starsHTML;
+    qvBrand.textContent = brandText;
+    qvBadgeChip.textContent = badgeEl ? badgeEl.textContent.trim() : '';
     qvDesc.textContent = descByCategory[category] || 'A Medicube favorite, formulated for visible results with regular use.';
+
+    // Rebuild the price block as: struck-through old price on its own line
+    // (if any), then a discount % tag alongside the current price — pulled
+    // apart from the card's priceHTML rather than cloned as-is, so we can
+    // compute the discount percentage and lay them out on separate rows.
+    const priceScratch = document.createElement('div');
+    priceScratch.innerHTML = priceHTML;
+    const oldEl = priceScratch.querySelector('.prod-old');
+    qvPrice.innerHTML = '';
+    if (oldEl) {
+      const oldNum = parseFloat(oldEl.textContent.replace(/[^0-9.]/g, ''));
+      const curNum = parseFloat(card.dataset.price);
+      const oldLine = document.createElement('s');
+      oldLine.className = 'prod-old';
+      oldLine.textContent = oldEl.textContent.trim();
+      qvPrice.appendChild(oldLine);
+
+      const mainLine = document.createElement('div');
+      mainLine.className = 'qv-price-main';
+      if (oldNum > 0 && curNum > 0 && curNum < oldNum) {
+        const discount = Math.round((1 - curNum / oldNum) * 100);
+        const tag = document.createElement('span');
+        tag.className = 'qv-discount-tag';
+        tag.textContent = `${discount}%`;
+        mainLine.appendChild(tag);
+      }
+      const curSpan = document.createElement('span');
+      curSpan.className = 'qv-price-current';
+      curSpan.textContent = `$${curNum.toFixed(0)}`;
+      mainLine.appendChild(curSpan);
+      qvPrice.appendChild(mainLine);
+    } else {
+      const mainLine = document.createElement('div');
+      mainLine.className = 'qv-price-main';
+      mainLine.innerHTML = `<span class="qv-price-current">${priceScratch.textContent.trim()}</span>`;
+      qvPrice.appendChild(mainLine);
+    }
 
     // image + background swatch to match the card
     qvImg.className = 'qv-img';
@@ -1667,11 +1686,6 @@ function initQuickView() {
       qvImg.appendChild(img);
     } else {
       qvImg.innerHTML = '<i class="ti ti-photo" aria-hidden="true"></i>';
-    }
-    if (badgeEl) {
-      const badge = badgeEl.cloneNode(true);
-      badge.classList.add('qv-badge');
-      qvImg.appendChild(badge);
     }
 
     const outOfStock = card.classList.contains('out-of-stock');
@@ -1696,7 +1710,6 @@ function initQuickView() {
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
-    setQvImgSquare();
   }
 
   async function loadQvReviews(productId) {
@@ -1771,7 +1784,11 @@ function initQuickView() {
         el.addEventListener('click', () => {
           // If this product's card already exists on the page (shop/devices/sets
           // render every card in their category), just reopen Quick View on it.
-          const matchingCard = document.querySelector(`[data-product-id="${el.dataset.productId}"]`);
+          // Scoped to `.product-card` specifically — otherwise this can match a
+          // `.qv-related-card` thumbnail instead (they share the data-product-id
+          // attribute, and the modal's markup sits earlier in the DOM than the
+          // product grid), which lacks a real product image and breaks the photo.
+          const matchingCard = document.querySelector(`.product-card[data-product-id="${el.dataset.productId}"]`);
           if (matchingCard) {
             openModal(matchingCard);
           } else {

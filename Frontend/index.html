@@ -324,11 +324,18 @@
     <div class="qv-body">
       <div class="qv-img" id="qvImg"></div>
       <div class="qv-info">
-        <span class="prod-brand">Medicube</span>
+        <span class="qv-badge-chip" id="qvBadgeChip"></span>
+        <div class="qv-brand-row">
+          <span class="prod-brand" id="qvBrand">Medicube</span>
+          <i class="ti ti-chevron-right qv-brand-chevron" aria-hidden="true"></i>
+        </div>
         <h2 class="qv-name" id="qvName"></h2>
         <div class="prod-stars" id="qvStars"></div>
         <div class="qv-price" id="qvPrice"></div>
-        <p class="qv-desc" id="qvDesc"></p>
+        <div class="qv-desc-box">
+          <span class="qv-desc-icon"><i class="ti ti-sparkles" aria-hidden="true"></i></span>
+          <p class="qv-desc" id="qvDesc"></p>
+        </div>
         <div class="qv-purchase-panel">
           <div class="qv-qty">
             <span>Quantity</span>
@@ -339,8 +346,8 @@
             </div>
           </div>
           <div class="qv-actions">
-            <button class="qv-add-cart" id="qvAddCart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i> Add to cart</button>
             <button class="wish-btn qv-wish" id="qvWish" aria-label="Add to wishlist"><i class="ti ti-heart"></i></button>
+            <button class="qv-add-cart" id="qvAddCart"><i class="ti ti-shopping-bag-plus" aria-hidden="true"></i> Add to Cart</button>
           </div>
         </div>
         <div class="qv-reviews" id="qvReviews"></div>

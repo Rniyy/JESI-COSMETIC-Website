@@ -1557,75 +1557,136 @@ body {
 .qv-close:hover { background: #1e1810; color: #fff; }
 
 .qv-body {
-  display: block;
+  display: grid;
+  grid-template-columns: 44% 1fr;
+  align-items: start;
+  min-height: 100%;
 }
 
 .qv-img {
   position: sticky;
   top: 0;
+  align-self: start;
   width: 100%;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  z-index: 5;
+  background: #fdfbfa;
   font-size: 48px;
   color: rgba(0,0,0,0.15);
-  /* height is set inline by JS: square on open, shrinking into a short
-     banner as the modal is scrolled (see initQuickView in script.js) */
 }
 .qv-img img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  inset: 48px;
+  object-fit: contain;
   display: block;
 }
-.qv-img .qv-badge {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-}
+/* The product badge now renders as .qv-badge-chip in the info panel
+   (matching the reference layout), so hide the copy that used to sit
+   on top of the image itself. */
+.qv-img .qv-badge { display: none; }
 
 .qv-info {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 32px 24px 60px;
-  border-left: none;
-  border-top: 2px solid #ecdfd9;
+  max-width: 480px;
+  padding: 56px 40px 60px;
+  border-left: 2px solid #ecdfd9;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.qv-name {
-  font-size: 26px;
-  font-weight: 600;
-  color: #1e1810;
-  line-height: 1.25;
+
+.qv-badge-chip {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  color: #c94f74;
+  border: 1px solid #f0aec2;
+  border-radius: 5px;
+  padding: 3px 9px;
+  margin-bottom: 12px;
+}
+.qv-badge-chip:empty { display: none; margin-bottom: 0; }
+
+.qv-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   margin-bottom: 8px;
 }
-.qv-info .prod-stars { font-size: 13px; margin-bottom: 16px; }
+.qv-brand-row .prod-brand {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: none;
+  color: #1e1810;
+}
+.qv-brand-chevron { font-size: 12px; color: #a08e88; }
+
+.qv-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1e1810;
+  line-height: 1.3;
+  margin-bottom: 10px;
+}
+.qv-info .prod-stars { font-size: 13px; margin-bottom: 18px; color: #6a6258; }
+
 .qv-price {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 22px;
+}
+.qv-price .prod-old {
+  font-size: 14px;
+  font-weight: 500;
+  color: #b0a89e;
+}
+.qv-price-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.qv-discount-tag {
+  font-size: 15px;
+  font-weight: 700;
+  color: #d13b3b;
+}
+.qv-price-current {
   font-size: 24px;
   font-weight: 700;
   color: #1e1810;
-  margin-bottom: 14px;
 }
-.qv-price .prod-old {
-  margin-left: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #b0a89e;
+
+.qv-desc-box {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f6f2ef;
+  margin-bottom: 22px;
+}
+.qv-desc-icon {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #1e1810;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
 }
 .qv-desc {
   font-size: 14px;
   line-height: 1.6;
-  color: #6a6258;
-  margin-bottom: 22px;
+  color: #4a423c;
+  margin: 0;
 }
 
-/* Purchase panel — quantity + add-to-cart/wishlist grouped in one bordered
+/* Purchase panel — quantity + wishlist/add-to-cart grouped in one bordered
    box, matching the app's existing bordered-panel language (coupon box,
    notification dropdown) rather than sitting loose in the flow. */
 .qv-purchase-panel {
@@ -1676,6 +1737,15 @@ body {
 }
 .qv-wish:hover { color: #c09080; border-color: #c09080; }
 
+@media (max-width: 900px) {
+  .qv-body { grid-template-columns: 1fr; }
+  /* position: relative (not static) — the image still needs to stay the
+     positioned ancestor for its absolutely-positioned <img>, otherwise the
+     photo sizes itself against the full-screen modal instead of this box. */
+  .qv-img { position: relative; height: auto; aspect-ratio: 1; }
+  .qv-img img { inset: 20px; }
+  .qv-info { max-width: none; border-left: none; border-top: 2px solid #ecdfd9; }
+}
 @media (max-width: 720px) {
   .qv-info { padding: 24px 20px 40px; }
   .qv-name { font-size: 21px; }
