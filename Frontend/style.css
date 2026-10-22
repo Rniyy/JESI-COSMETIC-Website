@@ -1579,7 +1579,10 @@ body {
 }
 .qv-img img {
   position: absolute;
-  inset: 48px;
+  top: 48px;
+  left: 48px;
+  width: calc(100% - 96px);
+  height: calc(100% - 96px);
   object-fit: contain;
   display: block;
 }
@@ -1743,7 +1746,7 @@ body {
      positioned ancestor for its absolutely-positioned <img>, otherwise the
      photo sizes itself against the full-screen modal instead of this box. */
   .qv-img { position: relative; height: auto; aspect-ratio: 1; }
-  .qv-img img { inset: 20px; }
+  .qv-img img { top: 20px; left: 20px; width: calc(100% - 40px); height: calc(100% - 40px); }
   .qv-info { max-width: none; border-left: none; border-top: 2px solid #ecdfd9; }
 }
 @media (max-width: 720px) {
