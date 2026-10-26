@@ -999,6 +999,42 @@ function initCheckout() {
 
   let savedAddresses = [];
 
+  // ── Country → State/Province → City dropdowns ──
+  const countrySel = document.getElementById('checkoutCountry');
+  const stateSel   = document.getElementById('checkoutState');
+  const citySel    = document.getElementById('checkoutCity');
+  let locations = {}; // { Country: { State: [Cities] } }, from GET /api/checkout/locations
+
+  function fillSelect(sel, values, placeholder) {
+    sel.innerHTML = `<option value="">${placeholder}</option>` +
+      values.map(v => `<option value="${v}">${v}</option>`).join('');
+    sel.disabled = values.length === 0;
+  }
+  function onCountryChange() {
+    fillSelect(stateSel, Object.keys(locations[countrySel.value] || {}), 'Select state / province');
+    fillSelect(citySel, [], 'Select city');
+  }
+  function onStateChange() {
+    fillSelect(citySel, (locations[countrySel.value] || {})[stateSel.value] || [], 'Select city');
+  }
+  function resetLocationSelects() {
+    fillSelect(countrySel, Object.keys(locations), 'Select country');
+    if (locations['Cambodia']) countrySel.value = 'Cambodia';
+    onCountryChange();
+  }
+  async function loadLocations() {
+    try {
+      const res  = await fetch(`${API}/checkout/locations`, { credentials: 'include' });
+      const json = await res.json();
+      if (json.success) locations = json.data;
+    } catch (err) {
+      console.error('Failed to load locations:', err);
+    }
+    resetLocationSelects();
+  }
+  countrySel.addEventListener('change', onCountryChange);
+  stateSel.addEventListener('change', onStateChange);
+
   function showNewAddressFields(show) {
     newFields.style.display = show ? 'flex' : 'none';
     if (show) {
@@ -1061,6 +1097,7 @@ function initCheckout() {
     if (cartOverlay) cartOverlay.classList.remove('open');
     document.body.style.overflow = 'hidden';
     checkoutOverlay.classList.add('open');
+    if (Object.keys(locations).length === 0) loadLocations();
     loadSavedAddresses();
   }
   function closeCheckout() {
@@ -1131,8 +1168,8 @@ function initCheckout() {
         postal_code:    document.getElementById('checkoutPostalCode').value.trim(),
         country:        document.getElementById('checkoutCountry').value.trim(),
       };
-      if (!address.full_name || !address.line1 || !address.city) {
-        checkoutError.textContent   = 'Full name, address line 1, and city are required';
+      if (!address.full_name || !address.line1 || !address.country || !address.state_province || !address.city) {
+        checkoutError.textContent   = 'Full name, address line 1, country, state/province and city are required';
         checkoutError.style.display = 'block';
         return;
       }
@@ -1159,7 +1196,7 @@ function initCheckout() {
 
       closeCheckout();
       checkoutForm.reset();
-      document.getElementById('checkoutCountry').value = 'Cambodia';
+      resetLocationSelects();
 
       // Cart is now empty server-side — refresh the badge/panel to reflect that
       document.dispatchEvent(new CustomEvent('cart:changed'));

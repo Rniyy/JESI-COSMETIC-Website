@@ -259,8 +259,10 @@
   color: #6b5b56;
 }
 
-.admin-modal-form input {
+.admin-modal-form input,
+.admin-modal-form select {
   font-family: inherit;
+  background: #fff;
   font-size: 14px;
   color: #3a2e2b;
   padding: 10px 12px;
@@ -268,7 +270,9 @@
   border-radius: 8px;
   outline: none;
 }
-.admin-modal-form input:focus { border-color: #dda297; }
+.admin-modal-form input:focus,
+.admin-modal-form select:focus { border-color: #dda297; }
+.admin-modal-form select:disabled { background: #f4ece8; color: #a08e88; }
 
 .admin-form-row {
   display: grid;

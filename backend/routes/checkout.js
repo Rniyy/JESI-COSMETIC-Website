@@ -5,6 +5,7 @@ const multer  = require('multer');
 const crypto  = require('crypto');
 const path    = require('path');
 const pool    = require('../db/pool');
+const { LOCATIONS, isValidLocation } = require('../data/locations');
 
 const FLAT_SHIPPING_FEE   = 5.00;
 const FREE_SHIPPING_ABOVE = 50.00;
@@ -80,19 +81,15 @@ function parseReviewCount(value) {
 }
 
 /**
- * POST /api/checkout
- * Body: EITHER { address_id: 5 } to reuse a saved address,
- *       OR     { address: { full_name, phone, line1, line2, city, state_province, postal_code, country } }
- *              to enter a new one — which gets saved to the address book automatically.
- *
- * Turns the logged-in user's current cart into a real order:
- *  1. Snapshot the cart (name/price at time of purchase, so later price
- *     changes never rewrite history)
- *  2. Resolve the shipping address (reuse saved, or save a new one)
- *  3. Create the order + order_items
- *  4. Empty the cart
- * All as one DB transaction — if anything fails partway, nothing is committed.
+ * GET /api/checkout/locations
+ * Country -> State/Province -> Cities, used to build the cascading
+ * dropdowns on the address form:
+ *   { Cambodia: { "Phnom Penh": ["Chamkar Mon", ...], ... }, ... }
  */
+router.get('/locations', (req, res) => {
+  res.json({ success: true, data: LOCATIONS });
+});
+
 /**
  * POST /api/checkout/validate-coupon   { code }
  * Preview-only — checks a coupon against the user's CURRENT cart subtotal.
@@ -117,6 +114,22 @@ router.post('/validate-coupon', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/checkout
+ * Body: EITHER { address_id: 5 } to reuse a saved address,
+ *       OR     { address: { full_name, phone, line1, line2, country, state_province, city, postal_code } }
+ *              to enter a new one — which gets saved to the address book automatically.
+ *              country / state_province / city must be a valid combination from
+ *              data/locations.js (see GET /api/checkout/locations).
+ *
+ * Turns the logged-in user's current cart into a real order:
+ *  1. Snapshot the cart (name/price at time of purchase, so later price
+ *     changes never rewrite history)
+ *  2. Resolve the shipping address (reuse saved, or save a new one)
+ *  3. Create the order + order_items
+ *  4. Empty the cart
+ * All as one DB transaction — if anything fails partway, nothing is committed.
+ */
 router.post('/', async (req, res) => {
   const conn = await pool.getConnection();
   try {
@@ -134,9 +147,16 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Selected address not found' });
       }
       existingAddress = found;
-    } else if (!address || !address.full_name || !address.line1 || !address.city) {
-      conn.release();
-      return res.status(400).json({ success: false, message: 'A shipping address (name, address line, city) is required' });
+    } else {
+      if (!address || !address.full_name || !address.line1) {
+        conn.release();
+        return res.status(400).json({ success: false, message: 'A shipping address (name and address line) is required' });
+      }
+      const locationCheck = isValidLocation(address.country, address.state_province, address.city);
+      if (!locationCheck.ok) {
+        conn.release();
+        return res.status(400).json({ success: false, message: locationCheck.message });
+      }
     }
 
     await conn.beginTransaction();
@@ -199,8 +219,8 @@ router.post('/', async (req, res) => {
          VALUES (?, 'Saved at checkout', ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           req.user.id, address.full_name, address.phone || null, address.line1,
-          address.line2 || null, address.city, address.state_province || null,
-          address.postal_code || null, address.country || 'Cambodia',
+          address.line2 || null, address.city, address.state_province,
+          address.postal_code || null, address.country,
         ]
       );
       addressIdForOrder = addrResult.insertId;
