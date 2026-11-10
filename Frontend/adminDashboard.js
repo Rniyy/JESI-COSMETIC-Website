@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api';
+const API = 'https://jesi-cosmetic-website.onrender.com';
 const API_ORIGIN = API.replace(/\/api\/?$/, ''); // for uploaded file URLs like /uploads/products/...
 
 let allProducts = [];
