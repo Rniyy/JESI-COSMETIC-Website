@@ -21,9 +21,22 @@ const PORT = process.env.PORT || 3000;
 
 // Electron's loadFile() serves pages over file://, which sends either no
 // Origin header or "null". Allow that alongside whatever's in CORS_ORIGINS.
+
 const allowedOrigins = (process.env.CORS_ORIGINS || 'null,http://localhost:3000')
   .split(',')
-  .map(o => o.trim());
+  .map(origin => origin.trim().replace(/\/$/, ''));
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  credentials: true,
+}));
+
 
 app.use(cors({
   origin(origin, callback) {
