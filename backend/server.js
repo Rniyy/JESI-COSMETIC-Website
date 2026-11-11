@@ -19,6 +19,9 @@ const notificationsRoutes = require('./routes/notifications');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// Behind Render's proxy: needed so Secure cookies work (req is HTTPS at the edge)
+app.set('trust proxy', 1);
+
 // Electron's loadFile() serves pages over file://, which sends either no
 // Origin header or "null". Allow that alongside whatever's in CORS_ORIGINS.
 
@@ -38,15 +41,6 @@ app.use(cors({
 }));
 
 
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error(`Origin ${origin} not allowed by CORS`));
-  },
-  credentials: true,
-}));
 
 // Review photos/videos land in backend/uploads/reviews — create it if missing
 const uploadsDir = path.join(__dirname, 'uploads', 'reviews');
