@@ -4,7 +4,9 @@
    API base: http://localhost:3000/api
 ═══════════════════════════════════════════════════════════ */
 
-const API = 'https://jesi-cosmetic-website.onrender.com/api';
+const API = location.protocol === 'file:'
+  ? 'https://jesi-cosmetic-website.onrender.com/api'   // Electron app (file://) -> talk to the hosted backend
+  : '/api';                                             // website served by the backend itself -> same origin, cookies just work
 const API_ORIGIN = API.replace(/\/api\/?$/, ''); // for uploaded file URLs like /uploads/reviews/...
 
 /* ─────────────────────────────────────────────────────────

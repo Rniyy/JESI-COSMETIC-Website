@@ -64,6 +64,10 @@ app.use('/api/wishlist', wishlistRoutes);
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'ok' }));
 
+// Serve the website itself (backend/public) from the same origin as the API,
+// so login cookies are first-party and work in every browser.
+app.use(express.static(path.join(__dirname, 'public')));
+
 // 404
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Not found' });
