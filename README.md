@@ -43,6 +43,7 @@ JavaScript storefront.
 | Database | MySQL |
 | Auth | JWT in httpOnly cookies, bcrypt-hashed passwords |
 | Email | Nodemailer (SMTP) |
+| Media storage | Cloudinary (local disk in development) |
 | Desktop (optional) | Electron |
 
 ---
@@ -82,7 +83,6 @@ See `env.example` for the settings the app expects.
 ## Roadmap
 
 - Real payment gateway (KHQR / ABA PayWay, or Stripe)
-- Cloud storage for uploaded photos
 - Order confirmation emails
 - Search sorting and price filters
 - Automated tests
