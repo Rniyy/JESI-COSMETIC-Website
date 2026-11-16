@@ -2,6 +2,7 @@ const API = location.protocol === 'file:'
   ? 'https://jesi-cosmetic-website.onrender.com/api'   // Electron app (file://) -> talk to the hosted backend
   : '/api';                                             // website served by the backend itself -> same origin, cookies just work
 const API_ORIGIN = API.replace(/\/api\/?$/, ''); // for uploaded file URLs like /uploads/products/...
+const assetUrl = u => (/^https?:\/\//i.test(u || '') ? u : `${API_ORIGIN}${u || ''}`); // Cloudinary URLs are absolute; old ones are /uploads/...
 
 let allProducts = [];
 let allCoupons   = [];
@@ -436,7 +437,7 @@ function renderProductGallery(productId, images) {
   const grid = document.getElementById('productGalleryGrid');
   grid.innerHTML = images.map(img => `
     <div class="admin-gallery-thumb-wrap">
-      <img class="admin-gallery-thumb" src="${API_ORIGIN}${img.image_url}" alt="">
+      <img class="admin-gallery-thumb" src="${assetUrl(img.image_url)}" alt="">
       <button type="button" class="admin-gallery-remove" data-image-id="${img.id}">&times;</button>
     </div>
   `).join('');

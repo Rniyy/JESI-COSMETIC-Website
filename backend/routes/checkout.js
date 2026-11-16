@@ -5,6 +5,7 @@ const multer  = require('multer');
 const crypto  = require('crypto');
 const path    = require('path');
 const pool    = require('../db/pool');
+const { saveFiles, removeFile } = require('../utils/storage');
 const { LOCATIONS, isValidLocation } = require('../data/locations');
 
 const FLAT_SHIPPING_FEE   = 5.00;
@@ -45,16 +46,8 @@ const MAX_IMAGE_BYTES = 5  * 1024 * 1024;  // 5MB per image
 const MAX_VIDEO_BYTES = 30 * 1024 * 1024;  // 30MB per video
 const MAX_FILES = 5;
 
-const reviewMediaStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads', 'reviews')),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${crypto.randomBytes(16).toString('hex')}${ext}`);
-  },
-});
-
 const uploadReviewMedia = multer({
-  storage: reviewMediaStorage,
+  storage: multer.memoryStorage(), // files are handed to utils/storage.js (Cloudinary or local disk)
   limits: { fileSize: MAX_VIDEO_BYTES, files: MAX_FILES },
   fileFilter: (req, file, cb) => {
     if (![...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].includes(file.mimetype)) {
@@ -436,6 +429,8 @@ router.post('/orders/:id/cancel', async (req, res) => {
  */
 router.post('/orders/:id/review', uploadReviewMedia.array('media', MAX_FILES), async (req, res) => {
   const conn = await pool.getConnection();
+  let mediaFiles = [];
+  let mediaUrls  = [];
   try {
     const rating  = parseInt(req.body.rating, 10);
     const comment = (req.body.comment || '').trim().slice(0, 1000); // sane length cap
@@ -446,15 +441,27 @@ router.post('/orders/:id/review', uploadReviewMedia.array('media', MAX_FILES), a
 
     // Reject any image that snuck past the shared file-size ceiling but
     // exceeds the smaller per-image limit (videos get the full 30MB).
-    const fs = require('fs');
     for (const file of req.files || []) {
       const isImage = ALLOWED_IMAGE_TYPES.includes(file.mimetype);
       if (isImage && file.size > MAX_IMAGE_BYTES) {
-        (req.files || []).forEach(f => fs.unlink(f.path, () => {}));
         conn.release();
         return res.status(400).json({ success: false, message: `Image "${file.originalname}" is over the 5MB limit` });
       }
     }
+
+    // Check the order first so we don't upload files for a review that will be rejected
+    const [[eligible]] = await conn.query(
+      `SELECT id FROM orders WHERE id = ? AND user_id = ? AND status = 'to_review'`,
+      [req.params.id, req.user.id]
+    );
+    if (!eligible) {
+      conn.release();
+      return res.status(400).json({ success: false, message: 'This order is not ready to be reviewed' });
+    }
+
+    // Upload media (Cloudinary or local disk) before opening the transaction
+    mediaFiles = req.files || [];
+    mediaUrls  = await saveFiles(mediaFiles, 'reviews');
 
     await conn.beginTransaction();
 
@@ -465,7 +472,7 @@ router.post('/orders/:id/review', uploadReviewMedia.array('media', MAX_FILES), a
     if (result.affectedRows === 0) {
       await conn.rollback();
       conn.release();
-      (req.files || []).forEach(f => fs.unlink(f.path, () => {}));
+      await Promise.all(mediaUrls.map(removeFile));
       return res.status(400).json({ success: false, message: 'This order is not ready to be reviewed' });
     }
 
@@ -485,11 +492,11 @@ router.post('/orders/:id/review', uploadReviewMedia.array('media', MAX_FILES), a
       );
 
       // Attach the same uploaded media to this product's review row
-      for (const file of req.files || []) {
-        const mediaType = ALLOWED_IMAGE_TYPES.includes(file.mimetype) ? 'image' : 'video';
+      for (let i = 0; i < mediaFiles.length; i++) {
+        const mediaType = ALLOWED_IMAGE_TYPES.includes(mediaFiles[i].mimetype) ? 'image' : 'video';
         await conn.query(
           'INSERT INTO review_media (review_id, media_type, url) VALUES (?, ?, ?)',
-          [reviewResult.insertId, mediaType, `/uploads/reviews/${file.filename}`]
+          [reviewResult.insertId, mediaType, mediaUrls[i]]
         );
       }
 
@@ -507,7 +514,8 @@ router.post('/orders/:id/review', uploadReviewMedia.array('media', MAX_FILES), a
     await conn.commit();
     res.json({ success: true });
   } catch (err) {
-    await conn.rollback();
+    await conn.rollback().catch(() => {});
+    await Promise.all(mediaUrls.map(removeFile)); // don't leave orphaned uploads
     console.error('POST /checkout/orders/:id/review error:', err);
     res.status(500).json({ success: false, message: 'Failed to submit review' });
   } finally {

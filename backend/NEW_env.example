@@ -43,3 +43,11 @@ MAIL_FROM="JESI-COSMETIC <no-reply@jesi-cosmetic.local>"
 # (password reset, back-in-stock). Point this at wherever reset-password.html
 # and shop.html are actually served from.
 FRONTEND_URL=http://localhost:8080
+
+# ── Image storage (Cloudinary) ──
+# Free account at https://cloudinary.com — copy the three values from the dashboard.
+# Leave blank for local development: photos are then saved in backend/uploads/.
+# On Render, set these three or uploaded photos disappear on every redeploy.
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=

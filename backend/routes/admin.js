@@ -5,22 +5,15 @@ const crypto  = require('crypto');
 const path    = require('path');
 const pool    = require('../db/pool');
 const { sendBackInStockEmail } = require('../utils/mailer');
+const { saveFiles, removeFile } = require('../utils/storage');
 
 // ── Product gallery image upload config ──
 const ALLOWED_PRODUCT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
 const MAX_GALLERY_IMAGES = 6;
 
-const productImageStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads', 'products')),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${crypto.randomBytes(16).toString('hex')}${ext}`);
-  },
-});
-
 const uploadProductImages = multer({
-  storage: productImageStorage,
+  storage: multer.memoryStorage(), // files are handed to utils/storage.js (Cloudinary or local disk)
   limits: { fileSize: MAX_PRODUCT_IMAGE_BYTES, files: MAX_GALLERY_IMAGES },
   fileFilter: (req, file, cb) => {
     if (!ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.mimetype)) {
@@ -164,10 +157,12 @@ router.put('/products/:id', async (req, res) => {
  */
 router.delete('/products/images/:imageId', async (req, res) => {
   try {
+    const [[img]] = await pool.query('SELECT image_url FROM product_images WHERE id = ?', [req.params.imageId]);
     const [result] = await pool.query('DELETE FROM product_images WHERE id = ?', [req.params.imageId]);
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
+    if (img) removeFile(img.image_url); // best effort, don't make the admin wait
     res.json({ success: true });
   } catch (err) {
     console.error('DELETE /admin/products/images/:imageId error:', err);
@@ -220,12 +215,18 @@ router.post('/products/:id/images', uploadProductImages.array('images', MAX_GALL
       [req.params.id]
     );
 
+    const urls = await saveFiles(req.files || [], 'products');
     let nextOrder = maxOrder + 1;
-    for (const file of req.files || []) {
-      await pool.query(
-        'INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)',
-        [req.params.id, `/uploads/products/${file.filename}`, nextOrder++]
-      );
+    try {
+      for (const url of urls) {
+        await pool.query(
+          'INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)',
+          [req.params.id, url, nextOrder++]
+        );
+      }
+    } catch (dbErr) {
+      await Promise.all(urls.map(removeFile));
+      throw dbErr;
     }
 
     const [rows] = await pool.query(

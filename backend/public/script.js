@@ -8,6 +8,7 @@ const API = location.protocol === 'file:'
   ? 'https://jesi-cosmetic-website.onrender.com/api'   // Electron app (file://) -> talk to the hosted backend
   : '/api';                                             // website served by the backend itself -> same origin, cookies just work
 const API_ORIGIN = API.replace(/\/api\/?$/, ''); // for uploaded file URLs like /uploads/reviews/...
+const assetUrl = u => (/^https?:\/\//i.test(u || '') ? u : `${API_ORIGIN}${u || ''}`); // Cloudinary URLs are absolute; old ones are /uploads/...
 
 /* ─────────────────────────────────────────────────────────
    HERO SLIDER
@@ -1776,8 +1777,8 @@ function initQuickView() {
             ${r.media && r.media.length > 0 ? `
               <div class="qv-review-media">
                 ${r.media.map(m => m.media_type === 'video'
-                  ? `<video src="${API_ORIGIN}${m.url}" class="qv-review-media-thumb" controls></video>`
-                  : `<img src="${API_ORIGIN}${m.url}" class="qv-review-media-thumb" alt="Review photo">`
+                  ? `<video src="${assetUrl(m.url)}" class="qv-review-media-thumb" controls></video>`
+                  : `<img src="${assetUrl(m.url)}" class="qv-review-media-thumb" alt="Review photo">`
                 ).join('')}
               </div>
             ` : ''}
@@ -1853,7 +1854,7 @@ function initQuickView() {
       const res  = await fetch(`${API}/products/${productId}/images`, { credentials: 'include' });
       const json = await res.json();
       if (json.success) {
-        images = images.concat(json.data.map(i => `${API_ORIGIN}${i.image_url}`));
+        images = images.concat(json.data.map(i => `${assetUrl(i.image_url)}`));
       }
     } catch (err) {
       console.error('Failed to load product gallery:', err);
