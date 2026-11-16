@@ -9,7 +9,7 @@ const win = new BrowserWindow({
   frame: true
 });
 
-  win.loadFile('index.html');
+  win.loadURL('https://jesi-cosmetic-website.onrender.com');
 }
 
 app.whenReady().then(createWindow);
