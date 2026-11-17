@@ -239,8 +239,18 @@
           </label>
         </div>
         <div class="admin-form-row">
-          <label>Image URL
-            <input type="text" id="productImageUrl" placeholder="e.g. Booster.jpg" />
+          <label>Product image
+            <div class="admin-image-picker">
+              <div class="admin-image-preview" id="productImagePreview"><i class="ti ti-photo"></i></div>
+              <div class="admin-image-controls">
+                <span class="admin-image-choose">
+                  <i class="ti ti-upload"></i> <span id="productImageChooseText">Choose from computer</span>
+                  <input type="file" id="productImageFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden />
+                </span>
+                <input type="text" id="productImageUrl" placeholder="or paste an image URL / file name, e.g. Booster.jpg" />
+                <small id="productImageStatus" class="admin-image-status"></small>
+              </div>
+            </div>
           </label>
           <label>Image swatch class
             <select id="productImageClass">
