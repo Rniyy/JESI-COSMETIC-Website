@@ -276,6 +276,7 @@ function initNav() {
         analyticsLoaded = true;
         initAnalytics();
       }
+      if (btn.dataset.view === 'messages') loadMessages();
       if (btn.dataset.view === 'coupons' && !couponsLoaded) {
         couponsLoaded = true;
         loadCoupons();
@@ -813,6 +814,71 @@ function initOrderModal() {
 /* ─────────────────────────────────────────────────────────
    COUPONS
 ───────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   MESSAGES  (Contact us form)
+───────────────────────────────────────────────────────── */
+const escHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function initMessages() {
+  document.getElementById('messagesFilter').addEventListener('change', loadMessages);
+}
+
+async function loadMessages() {
+  const list = document.getElementById('messagesList');
+  const status = document.getElementById('messagesFilter').value;
+  try {
+    const res  = await fetch(`${API}/admin/contact-messages?status=${status}`, { credentials: 'include' });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+
+    const badge = document.getElementById('messagesNavBadge');
+    badge.textContent = json.unread;
+    badge.style.display = json.unread > 0 ? '' : 'none';
+
+    if (json.data.length === 0) {
+      list.innerHTML = '<p class="msg-empty">No messages here yet.</p>';
+      return;
+    }
+    list.innerHTML = json.data.map(m => `
+      <article class="msg-card ${m.status === 'new' ? 'is-new' : ''}" data-id="${m.id}">
+        <div class="msg-head">
+          <div>
+            <strong>${escHtml(m.name)}</strong>
+            <a class="msg-email" href="mailto:${escHtml(m.email)}">${escHtml(m.email)}</a>
+          </div>
+          <span class="admin-badge-pill ${m.status === 'new' ? '' : 'out-of-stock'}">${m.status === 'new' ? 'New' : 'Read'}</span>
+        </div>
+        <div class="msg-meta">${escHtml(m.subject)} · ${new Date(m.created_at).toLocaleString()}</div>
+        <p class="msg-body">${escHtml(m.message)}</p>
+        <div class="msg-actions">
+          <a class="admin-secondary-btn" href="mailto:${escHtml(m.email)}?subject=${encodeURIComponent('Re: ' + m.subject)}"><i class="ti ti-mail"></i> Reply</a>
+          <button class="admin-secondary-btn" data-act="toggle" data-status="${m.status === 'new' ? 'read' : 'new'}">${m.status === 'new' ? 'Mark as read' : 'Mark as new'}</button>
+          <button class="admin-secondary-btn msg-delete" data-act="delete">Delete</button>
+        </div>
+      </article>`).join('');
+
+    list.querySelectorAll('.msg-card').forEach(card => {
+      const id = card.dataset.id;
+      card.querySelector('[data-act="toggle"]').addEventListener('click', async e => {
+        await fetch(`${API}/admin/contact-messages/${id}`, {
+          method: 'PATCH', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: e.currentTarget.dataset.status }),
+        });
+        loadMessages();
+      });
+      card.querySelector('[data-act="delete"]').addEventListener('click', async () => {
+        if (!confirm('Delete this message permanently?')) return;
+        await fetch(`${API}/admin/contact-messages/${id}`, { method: 'DELETE', credentials: 'include' });
+        loadMessages();
+      });
+    });
+  } catch (err) {
+    console.error('Failed to load messages:', err);
+    list.innerHTML = '<p class="msg-empty">Could not load messages.</p>';
+  }
+}
+
 async function loadCoupons() {
   try {
     const res  = await fetch(`${API}/admin/coupons`, { credentials: 'include' });
@@ -1030,4 +1096,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadProducts();
   loadOrders();
   loadUsers();
+  initMessages();
+  loadMessages();
 });

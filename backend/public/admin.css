@@ -759,3 +759,17 @@ body { overflow-x: hidden; }
 .admin-image-status { color: #8a766d; font-size: 12px; min-height: 14px; }
 .admin-image-status.is-error { color: #c0392b; }
 @media (max-width: 480px) { .admin-image-picker { flex-direction: column; } }
+
+
+/* ── Messages (Contact us inbox) ── */
+.msg-list { display: flex; flex-direction: column; gap: 12px; }
+.msg-card { background: #fff; border: 1px solid #ecdfd9; border-radius: 12px; padding: 16px 18px; }
+.msg-card.is-new { border-left: 4px solid #dda297; }
+.msg-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.msg-email { margin-left: 8px; font-size: 13px; color: #b8695c; word-break: break-all; }
+.msg-meta { font-size: 12px; color: #9a8b85; margin: 4px 0 10px; }
+.msg-body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.65; color: #3a2e2a; }
+.msg-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.msg-actions .admin-secondary-btn { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.msg-delete { color: #b03a2e; }
+.msg-empty { color: #9a8b85; padding: 24px 4px; }

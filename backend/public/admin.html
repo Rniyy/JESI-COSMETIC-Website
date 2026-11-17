@@ -20,6 +20,7 @@
         <button class="admin-nav-btn" data-view="orders">Orders</button>
         <button class="admin-nav-btn" data-view="users">Users</button>
         <button class="admin-nav-btn" data-view="coupons">Coupons</button>
+        <button class="admin-nav-btn" data-view="messages">Messages <span class="admin-nav-badge" id="messagesNavBadge" style="display:none;">0</span></button>
       </nav>
       <div class="admin-sidebar-foot">
         <a href="shop.html" class="admin-back-link">&larr; Back to shop</a>
@@ -195,6 +196,19 @@
               <tbody id="couponsTableBody"></tbody>
             </table>
           </div>
+        </section>
+
+        <!-- MESSAGES VIEW (Contact us form) -->
+        <section class="admin-view" id="view-messages" style="display:none;">
+          <div class="admin-view-head">
+            <h1>Messages</h1>
+            <select id="messagesFilter" class="admin-filter-input">
+              <option value="all">All messages</option>
+              <option value="new">New only</option>
+              <option value="read">Read only</option>
+            </select>
+          </div>
+          <div id="messagesList" class="msg-list"></div>
         </section>
 
       </div>

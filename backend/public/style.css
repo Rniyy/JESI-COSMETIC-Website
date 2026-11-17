@@ -1855,3 +1855,10 @@ body { overflow-x: hidden; }
 @media (max-width: 340px) {
   .logo-sub, .logo-sep { display: none; }
 }
+
+/* ── Navbar: fit the extra Reviews / Contact links on small laptops and tablets ── */
+@media (min-width: 901px) and (max-width: 1140px) {
+  .nav-inner { padding: 0 20px; gap: 18px; }
+  .nav-links { gap: 16px; }
+  .search-wrap { width: 130px; }
+}
