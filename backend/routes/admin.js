@@ -5,7 +5,7 @@ const crypto  = require('crypto');
 const path    = require('path');
 const pool    = require('../db/pool');
 const { sendBackInStockEmail } = require('../utils/mailer');
-const { saveFiles, removeFile } = require('../utils/storage');
+const { saveFiles, removeFile, isCloudinaryUrl } = require('../utils/storage');
 
 // ── Product gallery image upload config ──
 const ALLOWED_PRODUCT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -94,7 +94,7 @@ router.put('/products/:id', async (req, res) => {
     const qty = Math.max(0, parseInt(stock_quantity, 10) || 0);
 
     // Check stock BEFORE updating, so we can detect a 0 -> available transition
-    const [[before]] = await pool.query('SELECT stock_quantity, name FROM products WHERE id = ?', [req.params.id]);
+    const [[before]] = await pool.query('SELECT stock_quantity, name, image_url FROM products WHERE id = ?', [req.params.id]);
 
     const [result] = await pool.query(
       `UPDATE products SET
@@ -112,6 +112,12 @@ router.put('/products/:id', async (req, res) => {
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // Main picture was replaced by another uploaded one — remove the old file
+    if (before && before.image_url && before.image_url !== (image_url || null)
+        && (isCloudinaryUrl(before.image_url) || before.image_url.startsWith('/uploads/'))) {
+      removeFile(before.image_url);
     }
 
     // Product just came back in stock — notify everyone (logged-in users only,
@@ -151,6 +157,28 @@ router.put('/products/:id', async (req, res) => {
  * DELETE /api/admin/products/:id
  * Cascades to cart_items/wishlist_items via ON DELETE CASCADE in the schema.
  */
+/**
+ * POST /api/admin/products/image
+ * Uploads ONE main product picture (field name "image") and returns its URL,
+ * which the admin form then saves into the product's image_url.
+ */
+router.post('/products/image', (req, res, next) => {
+  uploadProductImages.single('image')(req, res, err => {
+    if (!err) return next();
+    const tooBig = err.code === 'LIMIT_FILE_SIZE';
+    res.status(400).json({ success: false, message: tooBig ? 'Image is over the 5MB limit' : err.message });
+  });
+}, async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No image received' });
+    const [url] = await saveFiles([req.file], 'products');
+    res.status(201).json({ success: true, data: { url } });
+  } catch (err) {
+    console.error('POST /admin/products/image error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to upload image' });
+  }
+});
+
 /**
  * DELETE /api/admin/products/images/:imageId
  * Registered BEFORE /products/:id so "images" is never mistaken for a product id.
