@@ -352,7 +352,7 @@ function renderProductsTable() {
   allProducts.forEach(p => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${p.image_url ? `<img class="admin-table-thumb" src="${p.image_url}" alt="${p.name}">` : '<div class="admin-table-thumb"></div>'}</td>
+      <td>${p.image_url ? `<img class="admin-table-thumb" src="${assetUrl(p.image_url)}" alt="${p.name}">` : '<div class="admin-table-thumb"></div>'}</td>
       <td>${p.name}</td>
       <td>${p.category}</td>
       <td>$${Number(p.price).toFixed(2)}</td>
@@ -395,6 +395,7 @@ function openProductModal(productId = null) {
     document.getElementById('productPrice').value        = p.price;
     document.getElementById('productOldPrice').value     = p.old_price || '';
     document.getElementById('productImageUrl').value     = p.image_url || '';
+    updateProductImagePreview();
     document.getElementById('productImageClass').value   = p.image_class || 'pi1';
     document.getElementById('productRating').value       = p.rating || '';
     document.getElementById('productReviewCount').value  = p.review_count || '';
@@ -408,6 +409,7 @@ function openProductModal(productId = null) {
   } else {
     title.textContent = 'Add product';
     document.getElementById('productId').value = '';
+    updateProductImagePreview();
     document.getElementById('productGallerySection').style.display = 'none';
     document.getElementById('productGalleryHint').style.display = 'block';
   }
@@ -447,6 +449,62 @@ function renderProductGallery(productId, images) {
       await fetch(`${API}/admin/products/images/${btn.dataset.imageId}`, { method: 'DELETE', credentials: 'include' });
       loadProductGallery(productId);
     });
+  });
+}
+
+function updateProductImagePreview() {
+  const url  = document.getElementById('productImageUrl').value.trim();
+  const box  = document.getElementById('productImagePreview');
+  const stat = document.getElementById('productImageStatus');
+  stat.textContent = ''; stat.classList.remove('is-error');
+  box.innerHTML = '';
+  if (!url) { box.innerHTML = '<i class="ti ti-photo"></i>'; return; }
+  const img = document.createElement('img');
+  img.alt = '';
+  img.onerror = () => { box.innerHTML = '<i class="ti ti-photo-off"></i>'; };
+  img.src = assetUrl(url);
+  box.appendChild(img);
+}
+
+function initProductImagePicker() {
+  const fileInput = document.getElementById('productImageFile');
+  const urlInput  = document.getElementById('productImageUrl');
+  const chooseBtn = fileInput.closest('.admin-image-choose');
+  const stat      = document.getElementById('productImageStatus');
+
+  urlInput.addEventListener('change', updateProductImagePreview);
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      stat.textContent = 'Image is over the 5MB limit'; stat.classList.add('is-error');
+      fileInput.value = '';
+      return;
+    }
+    // instant local preview while it uploads
+    document.getElementById('productImagePreview').innerHTML = `<img src="${URL.createObjectURL(file)}" alt="">`;
+    chooseBtn.classList.add('is-busy');
+    stat.classList.remove('is-error');
+    stat.textContent = 'Uploading…';
+
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res  = await fetch(`${API}/admin/products/image`, { method: 'POST', credentials: 'include', body: fd });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || 'Upload failed');
+      urlInput.value = json.data.url;
+      updateProductImagePreview();
+      stat.textContent = 'Uploaded — click Save to keep it';
+    } catch (err) {
+      console.error(err);
+      stat.textContent = err.message || 'Could not upload image';
+      stat.classList.add('is-error');
+    } finally {
+      chooseBtn.classList.remove('is-busy');
+      fileInput.value = '';
+    }
   });
 }
 
@@ -966,6 +1024,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initProductExport();
   initCouponModal();
   initProductGalleryUpload();
+  initProductImagePicker();
   initOrderModal();
   initOrderFilters();
   loadProducts();
