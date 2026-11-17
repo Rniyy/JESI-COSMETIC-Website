@@ -21,7 +21,8 @@ JavaScript storefront.
 - Cart and wishlist (guest items are kept when you log in)
 - Saved shipping addresses and a checkout flow with coupon codes
 - Order tracking by stage: To Pay → To Receive → To Review → Completed / Cancelled
-- Product reviews with star rating, photos and video
+- Product reviews with star rating, photos and video, plus a public reviews page with filters
+- Contact form (messages are saved and emailed to the shop owner)
 - In-app notifications
 - Fully responsive on phone, tablet and desktop
 
@@ -29,6 +30,7 @@ JavaScript storefront.
 - Dashboard with revenue, orders and units-sold analytics and charts
 - Product management: add, edit, delete, photo galleries, stock levels and low-stock alerts
 - Order management: search, filter by date and status, update status
+- Inbox for customer contact messages
 - Coupon management and user management (roles)
 - CSV export for products and orders
 
