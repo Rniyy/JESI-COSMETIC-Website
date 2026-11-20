@@ -8,6 +8,7 @@ const API = location.protocol === 'file:'
   ? 'https://jesi-cosmetic-website.onrender.com/api'   // Electron app (file://) -> talk to the hosted backend
   : '/api';                                             // website served by the backend itself -> same origin, cookies just work
 const API_ORIGIN = API.replace(/\/api\/?$/, ''); // for uploaded file URLs like /uploads/reviews/...
+const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const assetUrl = u => (/^https?:\/\//i.test(u || '') ? u : `${API_ORIGIN}${u || ''}`); // Cloudinary URLs are absolute; old ones are /uploads/...
 
 /* ─────────────────────────────────────────────────────────
@@ -949,10 +950,12 @@ function initAuth() {
         body:        JSON.stringify({ email }),
       });
       const json = await res.json();
-      forgotSuccess.textContent   = json.message || 'If that email is registered, a reset link has been generated.';
+      forgotSuccess.textContent   = json.message || 'If that email is registered, a reset link has been sent.';
       forgotSuccess.style.display = 'block';
     } catch (err) {
       console.error(err);
+      forgotSuccess.textContent   = 'Could not reach the server — please try again.';
+      forgotSuccess.style.display = 'block';
     }
   });
 
@@ -1770,10 +1773,10 @@ function initQuickView() {
         ${json.data.map(r => `
           <div class="qv-review-row">
             <div class="qv-review-head">
-              <span class="qv-review-name">${r.reviewer_first_name || 'Customer'}</span>
+              <span class="qv-review-name">${escapeHtml(r.reviewer_first_name || 'Customer')}</span>
               <span class="qv-review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
             </div>
-            ${r.comment ? `<p class="qv-review-comment">${r.comment}</p>` : ''}
+            ${r.comment ? `<p class="qv-review-comment">${escapeHtml(r.comment)}</p>` : ''}
             ${r.media && r.media.length > 0 ? `
               <div class="qv-review-media">
                 ${r.media.map(m => m.media_type === 'video'
@@ -1809,11 +1812,11 @@ function initQuickView() {
         <h3 class="qv-related-title">You might also like</h3>
         <div class="qv-related-row">
           ${related.map(p => `
-            <div class="qv-related-card" data-product-id="${p.id}" data-product-name="${p.name}">
+            <div class="qv-related-card" data-product-id="${p.id}" data-product-name="${escapeHtml(p.name)}">
               ${p.image_url
-                ? `<img class="qv-related-thumb" src="${p.image_url}" alt="${p.name}">`
+                ? `<img class="qv-related-thumb" src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name)}">`
                 : `<div class="qv-related-thumb-placeholder"></div>`}
-              <div class="qv-related-name">${p.name}</div>
+              <div class="qv-related-name">${escapeHtml(p.name)}</div>
               <div class="qv-related-price">$${parseFloat(p.price).toFixed(0)}</div>
             </div>
           `).join('')}
