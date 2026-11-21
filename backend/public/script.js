@@ -454,7 +454,48 @@ function initAuth() {
   let payingOrderId = null;
   let pendingCheckoutOrder = null; // set only when payment was triggered from checkout, not from My Orders
 
-  function openPaymentPinModal(orderId) {
+  // Which checkout is live? 'payway' (real ABA PayWay) or 'demo' (PIN screen, no real money)
+  let paymentProvider = 'demo';
+  const paymentConfigReady = fetch(`${API}/payments/config`, { credentials: 'include' })
+    .then(r => r.json())
+    .then(j => { if (j && j.success) paymentProvider = j.data.provider; })
+    .catch(() => {});
+
+  // Single entry point used by checkout and by "Pay Now" in My Orders
+  async function openPaymentPinModal(orderId) {
+    await paymentConfigReady;
+    if (paymentProvider === 'payway') return startGatewayPayment(orderId);
+    showPaymentPinModal(orderId);
+  }
+
+  // Real payment: ask our server for a signed PayWay request, then send the browser to PayWay's page
+  async function startGatewayPayment(orderId) {
+    pendingCheckoutOrder = null;
+    try {
+      showToast('Opening the secure payment page…');
+      const res  = await fetch(`${API}/payments/payway/orders/${orderId}/start`, { method: 'POST', credentials: 'include' });
+      const json = await res.json();
+      if (!json.success) { showToast(json.message || 'Could not start the payment', 'error'); return; }
+      if (json.data.free) { showToast('Nothing to pay — order confirmed'); loadOrders(); return; }
+
+      const form = document.createElement('form');
+      form.method  = 'POST';
+      form.enctype = 'multipart/form-data';
+      form.action  = json.data.action;
+      Object.entries(json.data.fields).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden'; input.name = name; input.value = value;
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.error(err);
+      showToast('Could not reach the server — please try again', 'error');
+    }
+  }
+
+  function showPaymentPinModal(orderId) {
     payingOrderId = orderId;
     paymentPinError.style.display = 'none';
     paymentPinForm.reset();
