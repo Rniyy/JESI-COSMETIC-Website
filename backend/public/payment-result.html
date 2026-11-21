@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment — JESI-COSMETIC</title>
+  <style>
+    :root { --ink:#1e1810; --muted:#7a7268; --accent:#c09080; --ok:#4f8a64; --bad:#b03a2e; --bg:#faf7f4; --card:#fff; --line:#e8e4e0; }
+    @media (prefers-color-scheme: dark) { :root { --ink:#f3ece6; --muted:#a79c92; --bg:#17130f; --card:#211b16; --line:#3a312a; } }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:20px; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+    .card { width:100%; max-width:440px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:36px 28px; text-align:center; }
+    .logo { letter-spacing:.14em; font-weight:700; font-size:13px; color:var(--muted); margin-bottom:24px; }
+    .icon { width:64px; height:64px; margin:0 auto 16px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+    .icon svg { width:32px; height:32px; }
+    .icon.ok { background:rgba(79,138,100,.15); color:var(--ok); }
+    .icon.bad { background:rgba(176,58,46,.12); color:var(--bad); }
+    .icon.wait { background:rgba(192,144,128,.18); color:var(--accent); }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size:21px; margin:0 0 8px; }
+    p { margin:0 0 22px; color:var(--muted); line-height:1.7; font-size:14px; }
+    .btns { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    a.btn, button.btn { font:inherit; font-size:14px; font-weight:600; padding:11px 22px; border-radius:8px; cursor:pointer; text-decoration:none; border:1px solid var(--line); background:transparent; color:var(--ink); }
+    a.btn.primary, button.btn.primary { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+    [hidden] { display:none !important; }
+  </style>
+</head>
+<body>
+  <main class="card" aria-live="polite">
+    <div class="logo">JESI — COSMETIC</div>
+    <div class="icon wait" id="icon"></div>
+    <h1 id="title">Checking your payment…</h1>
+    <p id="text">Please wait a moment while we confirm with the bank.</p>
+    <div class="btns">
+      <button class="btn primary" id="again" hidden>Check again</button>
+      <a class="btn primary" href="shop.html" id="shop">Back to shop</a>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const API = '/api';
+      const params  = new URLSearchParams(location.search);
+      const orderId = parseInt(params.get('order'), 10);
+      const $ = id => document.getElementById(id);
+
+      const ICONS = {
+        wait: '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>',
+        ok:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>',
+        bad:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+      };
+      function show(kind, title, text, showAgain) {
+        const icon = $('icon');
+        icon.className = 'icon ' + kind;
+        icon.innerHTML = ICONS[kind];
+        $('title').textContent = title;
+        $('text').textContent = text;
+        $('again').hidden = !showAgain;
+      }
+
+      if (!orderId) { show('bad', 'Order not found', 'This link is missing an order number.', false); return; }
+
+      if (params.get('cancelled') === '1') {
+        show('bad', 'Payment cancelled', 'No money was taken. Your order is saved — you can pay for it any time from My Orders.', false);
+        return;
+      }
+
+      let tries = 0;
+      async function check() {
+        tries++;
+        show('wait', 'Checking your payment…', 'Please wait a moment while we confirm with the bank.', false);
+        try {
+          const res = await fetch(`${API}/payments/payway/verify/${orderId}`, { credentials: 'include' });
+          if (res.status === 401) { show('bad', 'Please log in again', 'Log in, then open My Orders to see whether your payment went through.', false); return; }
+          const json = await res.json();
+          if (!json.success) throw new Error(json.message);
+          const s = json.data.status;
+
+          if (s === 'paid') {
+            show('ok', 'Payment received', `Thank you! Order #${orderId} is paid and on its way to being prepared.`, false);
+          } else if (s === 'failed') {
+            show('bad', 'Payment was declined', 'No money was taken. You can try again from My Orders, with another card or method.', false);
+          } else if (s === 'cancelled') {
+            show('bad', 'Payment cancelled', 'No money was taken. You can pay for this order any time from My Orders.', false);
+          } else if (tries < 15) {
+            setTimeout(check, 3000);
+          } else {
+            show('wait', 'Still waiting for the bank', 'We have not heard back yet. If you finished paying, give it a minute and check again, or look at My Orders.', true);
+          }
+        } catch (err) {
+          console.error(err);
+          if (tries < 15) setTimeout(check, 4000);
+          else show('bad', 'Could not check the payment', 'Please check your connection and try again.', true);
+        }
+      }
+      $('again').addEventListener('click', () => { tries = 0; check(); });
+      check();
+    })();
+  </script>
+</body>
+</html>
