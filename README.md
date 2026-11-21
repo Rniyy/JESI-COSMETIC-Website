@@ -20,6 +20,7 @@ JavaScript storefront.
 - Accounts: register, log in, edit profile, change password, reset password by email
 - Cart and wishlist (guest items are kept when you log in)
 - Saved shipping addresses and a checkout flow with coupon codes
+- Secure online payment through ABA PayWay (cards, ABA Pay, KHQR), with a demo mode for development
 - Order tracking by stage: To Pay → To Receive → To Review → Completed / Cancelled
 - Product reviews with star rating, photos and video, plus a public reviews page with filters
 - Contact form (messages are saved and emailed to the shop owner)
@@ -44,6 +45,7 @@ JavaScript storefront.
 | Backend | Node.js, Express |
 | Database | MySQL |
 | Auth | JWT in httpOnly cookies, bcrypt-hashed passwords |
+| Payments | ABA PayWay (hosted checkout, server-side verification) |
 | Email | Nodemailer (SMTP) |
 | Media storage | Cloudinary (local disk in development) |
 | Desktop (optional) | Electron |
@@ -84,7 +86,6 @@ See `env.example` for the settings the app expects.
 
 ## Roadmap
 
-- Real payment gateway (KHQR / ABA PayWay, or Stripe)
 - Order confirmation emails
 - Search sorting and price filters
 - Automated tests
