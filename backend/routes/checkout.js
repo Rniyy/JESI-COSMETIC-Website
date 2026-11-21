@@ -6,6 +6,7 @@ const crypto  = require('crypto');
 const path    = require('path');
 const pool    = require('../db/pool');
 const { saveFiles, removeFile } = require('../utils/storage');
+const payway = require('../utils/payway');
 const { LOCATIONS, isValidLocation } = require('../data/locations');
 
 const FLAT_SHIPPING_FEE   = 5.00;
@@ -334,14 +335,19 @@ router.get('/orders/:id', async (req, res) => {
 
 /**
  * POST /api/checkout/orders/:id/pay   { pin, confirm_pin? }
- * Mock payment — there's no real payment gateway wired up, so this
- * simulates a successful payment. Requires the user's 4-digit payment PIN:
+ * DEMO payment — used only when no payment gateway is configured (see routes/payments.js).
+ * It simulates a successful payment. Requires the user's 4-digit payment PIN:
  *  - First time ever: pin + confirm_pin must match, and it gets saved as
  *    their PIN going forward.
  *  - Every time after: pin is checked against the saved hash.
  */
 router.post('/orders/:id/pay', async (req, res) => {
   try {
+    // Once a real gateway is configured this demo endpoint must be OFF — otherwise
+    // anyone could mark their own order paid without paying. (Set ALLOW_DEMO_PAYMENTS=true to override.)
+    if (payway.isEnabled() && process.env.ALLOW_DEMO_PAYMENTS !== 'true') {
+      return res.status(403).json({ success: false, message: 'Please pay with the online payment page' });
+    }
     const { pin, confirm_pin } = req.body;
     if (!pin || !/^\d{4}$/.test(pin)) {
       return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits' });
