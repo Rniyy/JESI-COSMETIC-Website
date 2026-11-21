@@ -15,6 +15,11 @@ const authRoutes         = require('./routes/auth');
 const checkoutRoutes     = require('./routes/checkout');
 const addressesRoutes    = require('./routes/addresses');
 const notificationsRoutes = require('./routes/notifications');
+const reviewsRoutes      = require('./routes/reviews');
+const contactRoutes      = require('./routes/contact');
+const adminContactRoutes = require('./routes/adminContact');
+const paymentsRoutes     = require('./routes/payments');
+const ensureTables       = require('./db/ensureTables');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -54,10 +59,14 @@ app.use(ensureSession);
 app.use(attachUser);
 
 app.use('/api/auth',     authRoutes);
+app.use('/api/admin/contact-messages', requireAdmin, adminContactRoutes);
 app.use('/api/admin',    requireAdmin, adminRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/reviews',  reviewsRoutes);
+app.use('/api/contact',  contactRoutes);
 app.use('/api/cart',     requireAuth, cartRoutes);
 app.use('/api/checkout', requireAuth, checkoutRoutes);
+app.use('/api/payments', paymentsRoutes); // login is checked per route; PayWay's callback has no login
 app.use('/api/addresses', requireAuth, addressesRoutes);
 app.use('/api/notifications', requireAuth, notificationsRoutes);
 app.use('/api/wishlist', wishlistRoutes);
@@ -78,6 +87,9 @@ app.use((err, req, res, next) => {
   console.error(err);
   res.status(err.status || 500).json({ success: false, message: err.message || 'Server error' });
 });
+
+// Create tables added after the first schema (e.g. contact_messages) if missing
+ensureTables().catch(err => console.error('[db] ensureTables failed:', err.message));
 
 app.listen(PORT, () => {
   console.log(`JESI-COSMETIC API listening on http://localhost:${PORT}`);
